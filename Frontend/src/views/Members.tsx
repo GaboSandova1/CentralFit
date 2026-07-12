@@ -77,9 +77,9 @@ export default function Members() {
 
       {/* Main Table Area */}
       <div className="bg-surface-container rounded-xl border border-outline-variant overflow-hidden">
-        <div className="p-4 border-b border-outline-variant flex flex-col md:flex-row justify-between items-center gap-4">
+        <div className="p-2 border-b border-outline-variant flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-2">
-            <select className="bg-surface-container-high border border-outline-variant rounded-md px-3 py-2 text-body-sm text-on-surface focus:outline-none focus:border-primary">
+            <select className="bg-surface-container-high border border-outline-variant rounded-md px-3 py-1.5 text-body-sm text-on-surface focus:outline-none focus:border-primary">
               <option>Todos los Miembros</option>
               <option>Activos</option>
               <option>Por Vencer</option>
@@ -91,7 +91,7 @@ export default function Members() {
             <input 
               type="text" 
               placeholder="Buscar por nombre o cédula..." 
-              className="w-full bg-surface-container-lowest border border-outline-variant rounded-md pl-10 pr-4 py-2 text-body-sm text-on-surface focus:outline-none focus:border-primary"
+              className="w-full bg-surface-container-lowest border border-outline-variant rounded-md pl-10 pr-4 py-1.5 text-body-sm text-on-surface focus:outline-none focus:border-primary"
             />
           </div>
         </div>
@@ -131,14 +131,14 @@ export default function Members() {
                       </div>
                       <div>
                         <p className="font-body-sm text-on-surface font-medium leading-tight">{row.name}</p>
-                        <p className="font-label-sm text-on-surface-variant text-[11px]">C.I: {row.id}</p>
+                        <p className="font-label-sm text-on-surface-variant text-[12px]">C.I: {row.id}</p>
                       </div>
                     </div>
                   </td>
-                  <td className="p-3 font-body-sm text-on-surface-variant">{row.plan}</td>
-                  <td className="p-3 font-body-sm text-on-surface-variant">{row.date}</td>
+                  <td className="p-3 font-body-sm text-on-surface-variant text-[14px]">{row.plan}</td>
+                  <td className="p-3 font-body-sm text-on-surface-variant text-[14px]">{row.date}</td>
                   <td className="p-3">
-                    <span className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-[11px] font-semibold border min-w-[80px] ${row.statusColor}`}>
+                    <span className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-[12px] font-semibold border min-w-[80px] ${row.statusColor}`}>
                       {row.status}
                     </span>
                   </td>

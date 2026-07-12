@@ -1,4 +1,9 @@
+import { useState } from "react";
+import RenovationModal from "../components/RenovationModal";
+
 export default function Dashboard() {
+  const [renovationModalOpen, setRenovationModalOpen] = useState(false);
+
   return (
     <>
       {/* Page Header */}
@@ -167,21 +172,21 @@ export default function Dashboard() {
                         </div>
                         <div>
                           <p className="font-body-sm text-on-surface font-medium">{row.name}</p>
-                          <p className="font-label-sm text-on-surface-variant text-[11px]">{row.phone}</p>
+                          <p className="font-label-sm text-on-surface-variant text-[12px]">{row.phone}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="p-3 font-body-sm text-on-surface-variant">{row.plan}</td>
+                    <td className="p-3 font-body-sm text-on-surface-variant text-[14px]">{row.plan}</td>
                     <td className="p-3">
-                      <span className={`inline-flex items-center px-2 py-1 rounded text-[11px] font-semibold border ${
+                      <span className={`inline-flex items-center px-2 py-1 rounded text-[12px] font-semibold border ${
                         row.statusType === 'warning' ? 'bg-tertiary/10 text-tertiary border-tertiary/20' : 'bg-error/10 text-error border-error/20'
                       }`}>
                         {row.status}
                       </span>
                     </td>
                     <td className="p-3">
-                      <button className="flex items-center gap-1 font-label-sm text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer">
-                        <span className="material-symbols-outlined text-[16px]">{row.actionIcon}</span>
+                      <button onClick={() => { if (row.action === 'Renovar') setRenovationModalOpen(true); }} className="flex items-center gap-1 font-label-sm text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer text-[14px]">
+                        <span className="material-symbols-outlined ">{row.actionIcon}</span>
                         {row.action}
                       </button>
                     </td>
@@ -192,6 +197,7 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+      <RenovationModal isOpen={renovationModalOpen} onClose={() => setRenovationModalOpen(false)} />
     </>
   );
 }

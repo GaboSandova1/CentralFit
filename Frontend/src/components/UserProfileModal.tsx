@@ -15,9 +15,9 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
         {/* Modal Header */}
         <div className="flex justify-between items-center p-4 border-b border-surface-variant">
           <h2 className="font-headline-md text-lg text-on-surface">Perfil de Administrador</h2>
-          <button onClick={onClose} aria-label="Close modal" className="text-on-surface-variant hover:text-on-surface transition-colors focus:outline-none cursor-pointer">
+          {/* <button onClick={onClose} aria-label="Close modal" className="text-on-surface-variant hover:text-on-surface transition-colors focus:outline-none cursor-pointer">
             <span className="material-symbols-outlined">close</span>
-          </button>
+          </button> */}
         </div>
         {/* Modal Body */}
         <div className="p-4 space-y-4 max-h-[calc(100vh-200px)] overflow-y-auto">
@@ -71,7 +71,7 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
           </div>
         </div>
         {/* Modal Footer */}
-        <div className="p-4 bg-surface-container-high border-t border-surface-variant flex justify-end gap-4 shrink-0">
+        <div className="p-3 bg-surface-container-high border-t border-surface-variant flex justify-end gap-4 shrink-0">
           <button onClick={onClose} className="px-5 py-2 rounded font-label-md text-label-md text-on-surface border border-surface-variant hover:bg-surface-variant/50 transition-colors cursor-pointer">
             Cancelar
           </button>
