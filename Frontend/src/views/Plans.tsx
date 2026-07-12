@@ -1,4 +1,11 @@
+import { useState } from 'react';
+import NewPlanModal from '../components/NewPlanModal';
+import EditPlanModal from '../components/EditPlanModal';
+
 export default function Plans() {
+  const [newPlanModalOpen, setNewPlanModalOpen] = useState(false);
+  const [editPlanModalOpen, setEditPlanModalOpen] = useState(false);
+
   return (
     <>
       {/* Page Header */}
@@ -18,7 +25,10 @@ export default function Plans() {
             <p className="text-label-md font-bold text-on-surface leading-tight">Mensual</p>
           </div>
         </div>
-        <button className="bg-primary text-on-primary font-label-md text-label-md px-5 py-2.5 rounded-lg hover:bg-primary-fixed transition-colors active:scale-95 flex items-center gap-2 shadow-[0_0_15px_rgba(81,224,132,0.2)] cursor-pointer">
+        <button 
+          onClick={() => setNewPlanModalOpen(true)}
+          className="bg-primary text-on-primary font-label-md text-label-md px-5 py-2.5 rounded-lg hover:bg-primary-fixed transition-colors active:scale-95 flex items-center gap-2 shadow-[0_0_15px_rgba(81,224,132,0.2)] cursor-pointer"
+        >
           <span className="material-symbols-outlined">add_circle</span>
           Nuevo Plan
         </button>
@@ -51,7 +61,7 @@ export default function Plans() {
             <p className="font-label-sm text-label-sm text-on-surface-variant">~ 4€: 3.193,17 (Bs) </p>
           </div>
           <div className="flex gap-2 w-full md:w-auto justify-end md:justify-end">
-            <button className="px-5 py-2 rounded-lg border border-outline-variant text-on-surface font-label-sm text-label-sm hover:bg-surface-container-high hover:border-on-surface transition-colors cursor-pointer">Editar</button>
+            <button onClick={() => setEditPlanModalOpen(true)} className="px-5 py-2 rounded-lg border border-outline-variant text-on-surface font-label-sm text-label-sm hover:bg-surface-container-high hover:border-on-surface transition-colors cursor-pointer">Editar</button>
             <button className="w-10 h-10 rounded-lg flex items-center justify-center border border-error/30 text-error hover:bg-error hover:text-on-error hover:border-error transition-colors cursor-pointer">
               <span className="material-symbols-outlined text-sm">delete</span>
             </button>
@@ -83,7 +93,7 @@ export default function Plans() {
             <p className="font-label-sm text-label-sm text-on-surface-variant">~ 12€: 9.579,50 (Bs)</p>
           </div>
           <div className="flex gap-2 w-full md:w-auto justify-end md:justify-end">
-            <button className="px-5 py-2 rounded-lg border border-outline-variant text-on-surface font-label-sm text-label-sm hover:bg-surface-container-high hover:border-on-surface transition-colors cursor-pointer">Editar</button>
+            <button onClick={() => setEditPlanModalOpen(true)} className="px-5 py-2 rounded-lg border border-outline-variant text-on-surface font-label-sm text-label-sm hover:bg-surface-container-high hover:border-on-surface transition-colors cursor-pointer">Editar</button>
             <button className="w-10 h-10 rounded-lg flex items-center justify-center border border-error/30 text-error hover:bg-error hover:text-on-error hover:border-error transition-colors cursor-pointer">
               <span className="material-symbols-outlined text-sm">delete</span>
             </button>
@@ -119,7 +129,7 @@ export default function Plans() {
             </p>
           </div>
           <div className="flex gap-2 w-full md:w-auto justify-end md:justify-end">
-            <button className="px-5 py-2 rounded-lg border border-outline-variant text-on-surface font-label-sm text-label-sm hover:bg-surface-container-high hover:border-on-surface transition-colors cursor-pointer">Editar</button>
+            <button onClick={() => setEditPlanModalOpen(true)} className="px-5 py-2 rounded-lg border border-outline-variant text-on-surface font-label-sm text-label-sm hover:bg-surface-container-high hover:border-on-surface transition-colors cursor-pointer">Editar</button>
             <button className="w-10 h-10 rounded-lg flex items-center justify-center border border-error/30 text-error hover:bg-error hover:text-on-error hover:border-error transition-colors cursor-pointer">
               <span className="material-symbols-outlined text-sm">delete</span>
             </button>
@@ -151,13 +161,15 @@ export default function Plans() {
             <p className="font-label-sm text-label-sm text-on-surface-variant">~ 360€: 287.384,90 (Bs)</p>
           </div>
           <div className="flex gap-2 w-full md:w-auto justify-end md:justify-end">
-            <button className="px-5 py-2 rounded-lg border border-outline-variant text-on-surface font-label-sm text-label-sm hover:bg-surface-container-high hover:border-on-surface transition-colors cursor-pointer">Editar</button>
+            <button onClick={() => setEditPlanModalOpen(true)} className="px-5 py-2 rounded-lg border border-outline-variant text-on-surface font-label-sm text-label-sm hover:bg-surface-container-high hover:border-on-surface transition-colors cursor-pointer">Editar</button>
             <button className="w-10 h-10 rounded-lg flex items-center justify-center border border-error/30 text-error hover:bg-error hover:text-on-error hover:border-error transition-colors cursor-pointer">
               <span className="material-symbols-outlined text-sm">delete</span>
             </button>
           </div>
         </div>
       </div>
+      <NewPlanModal isOpen={newPlanModalOpen} onClose={() => setNewPlanModalOpen(false)} />
+      <EditPlanModal isOpen={editPlanModalOpen} onClose={() => setEditPlanModalOpen(false)} />
     </>
   );
 }

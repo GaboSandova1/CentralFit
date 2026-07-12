@@ -1,4 +1,29 @@
+import { useState } from 'react';
+import ConfirmMemberDeletionModal from '../components/ConfirmMemberDeletionModal';
+import EditMemberModal from '../components/EditMemberModal';
+import RenovationModal from '../components/RenovationModal';
+
 export default function Members() {
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [renovationModalOpen, setRenovationModalOpen] = useState(false);
+  const [selectedMember, setSelectedMember] = useState<{ name: string, id: string } | null>(null);
+
+  const handleDeleteClick = (member: { name: string, id: string }) => {
+    setSelectedMember(member);
+    setDeleteModalOpen(true);
+  };
+
+  const handleEditClick = (member: { name: string, id: string }) => {
+    setSelectedMember(member);
+    setEditModalOpen(true);
+  };
+
+  const handleRenovateClick = (member: { name: string, id: string }) => {
+    setSelectedMember(member);
+    setRenovationModalOpen(true);
+  };
+
   return (
     <>
       <div className="mb-6">
@@ -118,9 +143,26 @@ export default function Members() {
                     </span>
                   </td>
                   <td className="p-3">
-                    <button className="w-8 h-8 rounded-lg hover:bg-surface-container-high flex items-center justify-center text-on-surface-variant transition-colors cursor-pointer">
-                      <span className="material-symbols-outlined text-[20px]">more_horiz</span>
-                    </button>
+                    <div className="flex items-center gap-1">
+                      <button 
+                        onClick={() => handleRenovateClick(row)}
+                        className="w-8 h-8 rounded-lg hover:bg-primary/20 hover:text-primary flex items-center justify-center text-on-surface-variant transition-colors cursor-pointer" title="Renovar"
+                      >
+                        <span className="material-symbols-outlined text-[20px]">autorenew</span>
+                      </button>
+                      <button 
+                        onClick={() => handleEditClick(row)}
+                        className="w-8 h-8 rounded-lg hover:bg-surface-container-high hover:text-on-surface flex items-center justify-center text-on-surface-variant transition-colors cursor-pointer" title="Editar"
+                      >
+                        <span className="material-symbols-outlined text-[20px]">edit</span>
+                      </button>
+                      <button 
+                        onClick={() => handleDeleteClick(row)}
+                        className="w-8 h-8 rounded-lg hover:bg-error/20 hover:text-error flex items-center justify-center text-on-surface-variant transition-colors cursor-pointer" title="Eliminar"
+                      >
+                        <span className="material-symbols-outlined text-[20px]">delete</span>
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -128,6 +170,28 @@ export default function Members() {
           </table>
         </div>
       </div>
+
+      <ConfirmMemberDeletionModal 
+        isOpen={deleteModalOpen} 
+        onClose={() => setDeleteModalOpen(false)} 
+        memberName={selectedMember?.name}
+        memberId={selectedMember?.id}
+      />
+
+      <EditMemberModal
+        isOpen={editModalOpen}
+        onClose={() => setEditModalOpen(false)}
+        onOpenDelete={() => {
+          setEditModalOpen(false);
+          setDeleteModalOpen(true);
+        }}
+        member={selectedMember || undefined}
+      />
+
+      <RenovationModal
+        isOpen={renovationModalOpen}
+        onClose={() => setRenovationModalOpen(false)}
+      />
     </>
   );
 }

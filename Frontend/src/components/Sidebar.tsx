@@ -5,9 +5,11 @@ interface SidebarProps {
   onViewChange: (view: ViewState) => void;
   isOpen: boolean;
   onClose: () => void;
+  onOpenRenovation: () => void;
+  onOpenSettings: () => void;
 }
 
-export default function Sidebar({ currentView, onViewChange, isOpen, onClose }: SidebarProps) {
+export default function Sidebar({ currentView, onViewChange, isOpen, onClose, onOpenRenovation, onOpenSettings }: SidebarProps) {
   const navigate = (view: ViewState) => {
     onViewChange(view);
     onClose();
@@ -33,7 +35,7 @@ export default function Sidebar({ currentView, onViewChange, isOpen, onClose }: 
         <div className="flex items-center gap-2">
           <img
             alt="CentralFit Logo"
-            className="h-13 w-auto object-contain"
+            className="h-9 w-auto object-contain"
             src="https://lh3.googleusercontent.com/aida-public/AB6AXuDoN3nhTiWMtDPIlNWrdimpj-hogB7cmQ6CvuOkILIAf1PRz51A3XnvCDvUp7Uk-ay_uOM1AlN7Os86VK-b3q5fVwviYgDzq7ogfu378mQHWhQ53t8UFiwkI7BhUgJ2XcVg6uZE53oIdJtGola2aVTS0KViJQxGg67K41jAZsG2C5goWRYWRqDNDzMD-2yBWZLtItTAABNJx4YMfH_zVpWaFaYYa-h8H1-VE4RxG_JBSutdXRdFJXP5UhzEBg5nA0K4Fg"
           />
           <div>
@@ -130,7 +132,10 @@ export default function Sidebar({ currentView, onViewChange, isOpen, onClose }: 
       
       {/* Bottom Actions */}
       <div className="px-4 mt-auto space-y-4">
-        <button className="w-full flex items-center justify-center gap-2 py-2.5 px-3 bg-primary-container text-on-primary-container font-headline-md text-label-md rounded-lg hover:opacity-90 transition-all active:scale-95 mb-4 cursor-pointer">
+        <button 
+          onClick={onOpenRenovation}
+          className="w-full flex items-center justify-center gap-2 py-2.5 px-3 bg-primary-container text-on-primary-container font-headline-md text-label-md rounded-lg hover:opacity-90 transition-all active:scale-95 mb-4 cursor-pointer"
+        >
           <span className="material-symbols-outlined">autorenew</span>
           <div className="flex flex-col items-start leading-tight">
             <span>Renovación de</span>
@@ -138,7 +143,10 @@ export default function Sidebar({ currentView, onViewChange, isOpen, onClose }: 
           </div>
         </button>
         <div className="border-t border-outline-variant/50 pt-4 space-y-1">
-          <a className="flex items-center gap-3 px-4 py-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors duration-200 cursor-pointer">
+          <a 
+            onClick={onOpenSettings}
+            className="flex items-center gap-3 px-4 py-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors duration-200 cursor-pointer"
+          >
             <span className="material-symbols-outlined">settings</span>
             <span className="font-body-sm text-body-sm">Configuración</span>
           </a>

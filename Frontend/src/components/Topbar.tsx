@@ -1,8 +1,9 @@
 interface TopbarProps {
   onMenuClick: () => void;
+  onOpenProfile: () => void;
 }
 
-export default function Topbar({ onMenuClick }: TopbarProps) {
+export default function Topbar({ onMenuClick, onOpenProfile }: TopbarProps) {
   return (
     <header className="h-topbar-height fixed top-0 right-0 left-0 md:left-sidebar-width z-20 bg-surface dark:bg-surface border-b border-outline-variant dark:border-outline-variant flex justify-between items-center px-gutter w-full md:w-[calc(100%-var(--spacing-sidebar-width))]">
       <div className="flex items-center gap-3">
@@ -27,7 +28,7 @@ export default function Topbar({ onMenuClick }: TopbarProps) {
           <span className="material-symbols-outlined">help</span>
         </button>
         <div className="h-8 w-px bg-outline-variant mx-2"></div>
-        <button className="flex items-center gap-2 text-on-surface hover:text-primary transition-colors cursor-pointer">
+        <button onClick={onOpenProfile} className="flex items-center gap-2 text-on-surface hover:text-primary transition-colors cursor-pointer">
           <img
             alt="Manager Profile"
             className="w-8 h-8 rounded-full object-cover border border-outline-variant"

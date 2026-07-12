@@ -1,4 +1,9 @@
+import { useState } from 'react';
+import TransactionHistoryModal from '../components/TransactionHistoryModal';
+
 export default function Reports() {
+  const [historyModalOpen, setHistoryModalOpen] = useState(false);
+
   return (
     <>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
@@ -72,7 +77,7 @@ export default function Reports() {
       <div className="bg-surface-container rounded-xl border border-outline-variant overflow-hidden mb-4">
         <div className="p-4 border-b border-outline-variant flex justify-between items-center bg-surface-container-high/30">
           <h3 className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Resumen de Transacciones</h3>
-          <button className="text-primary font-label-sm text-label-sm hover:underline cursor-pointer">Ver todas</button>
+          <button onClick={() => setHistoryModalOpen(true)} className="text-primary font-label-sm text-label-sm hover:underline cursor-pointer">Ver todas</button>
         </div>
         <div className="overflow-x-auto overflow-y-auto max-h-[320px]">
           <table className="w-full text-left border-collapse">
@@ -195,6 +200,7 @@ export default function Reports() {
           </div>
         </div>
       </div>
+      <TransactionHistoryModal isOpen={historyModalOpen} onClose={() => setHistoryModalOpen(false)} />
     </>
   );
 }
