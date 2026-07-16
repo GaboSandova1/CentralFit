@@ -35,7 +35,7 @@ export default function Sidebar({ currentView, onViewChange, isOpen, onClose, on
         <div className="flex items-center gap-2">
           <img
             alt="CentralFit Logo"
-            className="h-13 w-auto object-contain"
+            className="h-14 w-auto object-contain"
             src="https://lh3.googleusercontent.com/aida-public/AB6AXuDoN3nhTiWMtDPIlNWrdimpj-hogB7cmQ6CvuOkILIAf1PRz51A3XnvCDvUp7Uk-ay_uOM1AlN7Os86VK-b3q5fVwviYgDzq7ogfu378mQHWhQ53t8UFiwkI7BhUgJ2XcVg6uZE53oIdJtGola2aVTS0KViJQxGg67K41jAZsG2C5goWRYWRqDNDzMD-2yBWZLtItTAABNJx4YMfH_zVpWaFaYYa-h8H1-VE4RxG_JBSutdXRdFJXP5UhzEBg5nA0K4Fg"
           />
           <div>

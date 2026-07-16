@@ -1,0 +1,110 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model SuperAdmin {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+}
+
+model Gym {
+  id        String   @id @default(uuid())
+  name      String
+  status    String   @default("active") // active | suspended | trial
+  createdAt DateTime @default(now())
+
+  settings GymSettings?
+  users   User[]
+  members Member[]
+  plans   Plan[]
+}
+
+model User {
+  id           String @id @default(uuid())
+  gymId        String
+  gym          Gym    @relation(fields: [gymId], references: [id])
+  email        String @unique
+  passwordHash String
+  role         String @default("receptionist")
+
+  @@index([gymId])
+}
+
+model Member {
+  id        String   @id @default(uuid())
+  gymId     String
+  gym       Gym      @relation(fields: [gymId], references: [id])
+  fullName  String
+  cedula    String
+  phone     String?
+  photoUrl  String?
+  createdAt DateTime @default(now())
+
+  subscriptions Subscription[]
+
+  @@index([gymId])
+  @@index([cedula])
+}
+
+model Plan {
+  id           String   @id @default(uuid())
+  gymId        String
+  gym          Gym      @relation(fields: [gymId], references: [id])
+  name         String
+  durationDays Int
+  priceUsd     Decimal
+  priceBs      Decimal
+  description  String?
+
+  subscriptions Subscription[]
+
+  @@index([gymId])
+}
+
+model Subscription {
+  id        String   @id @default(uuid())
+  memberId  String
+  member    Member   @relation(fields: [memberId], references: [id])
+  planId    String
+  plan      Plan     @relation(fields: [planId], references: [id])
+  startDate DateTime
+  endDate   DateTime
+
+  transactions Transaction[]
+
+  @@index([endDate])
+  @@index([memberId])
+}
+
+model Transaction {
+  id             String       @id @default(uuid())
+  subscriptionId String
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id])
+  amountUsd      Decimal
+  amountBs       Decimal
+  method         String
+  reference      String?
+  createdAt      DateTime     @default(now())
+
+  @@index([subscriptionId])
+}
+
+model ExchangeRate {
+  id        String   @id @default(uuid())
+  usdToBs   Decimal
+  eurToBs   Decimal?
+  fetchedAt DateTime @default(now())
+}
+
+model GymSettings {
+  id        String @id @default(uuid())
+  gymId     String @unique
+  gym       Gym    @relation(fields: [gymId], references: [id])
+  graceDays Int    @default(3)
+}
