@@ -1,1 +1,1 @@
-export type ViewState = 'login' | 'dashboard' | 'members' | 'plans' | 'reports';
+export type ViewState = 'login' | 'register' | 'dashboard' | 'members' | 'plans' | 'reports';

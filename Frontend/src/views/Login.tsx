@@ -1,8 +1,9 @@
 interface LoginProps {
   onLogin: () => void;
+  onNavigateToRegister: () => void;
 }
 
-export default function Login({ onLogin }: LoginProps) {
+export default function Login({ onLogin, onNavigateToRegister }: LoginProps) {
   return (
     <div className="bg-surface text-on-surface font-body-md min-h-screen flex items-center justify-center relative overflow-hidden selection:bg-primary/30 selection:text-primary-fixed">
       {/* Ambient Background Effects */}
@@ -115,6 +116,19 @@ export default function Login({ onLogin }: LoginProps) {
             Ingresar
             <span className="material-symbols-outlined text-[20px]">login</span>
           </button>
+
+          <div className="text-center mt-2">
+            <p className="font-body-sm text-on-surface-variant text-body-sm">
+              ¿No tienes una cuenta?{' '}
+              <button
+                type="button"
+                onClick={onNavigateToRegister}
+                className="text-primary hover:text-primary-fixed font-medium transition-colors cursor-pointer"
+              >
+                Regístrate aquí
+              </button>
+            </p>
+          </div>
         </form>
       </main>
     </div>
