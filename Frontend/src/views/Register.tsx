@@ -73,7 +73,7 @@ export default function Register({ onRegisterComplete, onClose }: RegisterProps)
                 <p className="text-primary font-semibold text-sm uppercase tracking-widest mb-1">
                   {steps[currentStep].label}
                 </p>
-                <h2 className="text-white text-2xl font-bold font-headline">
+                <h2 className="text-white text-xl font-bold font-headline">
                   {steps[currentStep].title}
                 </h2>
               </div>
@@ -207,10 +207,10 @@ export default function Register({ onRegisterComplete, onClose }: RegisterProps)
           </div>
 
           {/* Footer Navigation */}
-          <div className="px-6 py-4 bg-surface-container-high border-t border-outline-variant flex items-center justify-between">
+          <div className="px-6 py-3 bg-surface-container-high border-t border-outline-variant flex items-center justify-between">
             <button 
               onClick={handlePrev}
-              className={`flex items-center gap-2 px-6 py-2.5 rounded-lg border border-outline text-on-surface hover:bg-surface-container transition-all cursor-pointer ${currentStep === 1 ? 'invisible' : ''}`}
+              className={`flex items-center gap-2 px-6 py-2 rounded-lg border border-outline text-on-surface hover:bg-surface-container transition-all cursor-pointer ${currentStep === 1 ? 'invisible' : ''}`}
             >
               <span className="material-symbols-outlined text-[20px]">arrow_back</span>
               <span className="font-semibold">Anterior</span>
@@ -219,7 +219,7 @@ export default function Register({ onRegisterComplete, onClose }: RegisterProps)
               <button 
                 onClick={handleNext}
                 disabled={isSubmitting}
-                className={`flex items-center gap-2 px-8 py-2.5 rounded-lg text-on-primary hover:brightness-110 transition-all shadow-lg shadow-primary/20 cursor-pointer ${currentStep === totalSteps ? 'bg-primary-container' : 'bg-primary'}`}
+                className={`flex items-center gap-2 px-8 py-2 rounded-lg text-on-primary hover:brightness-110 transition-all shadow-lg shadow-primary/20 cursor-pointer ${currentStep === totalSteps ? 'bg-primary-container' : 'bg-primary'}`}
               >
                 {isSubmitting ? (
                   <>
