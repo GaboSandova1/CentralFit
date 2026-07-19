@@ -16,24 +16,27 @@ model SuperAdmin {
 model Gym {
   id        String   @id @default(uuid())
   name      String
-  status    String   @default("active") // active | suspended | trial
+  address   String?
+  phone     String?
+  status    String   @default("active")
   createdAt DateTime @default(now())
 
+  users    User[]
+  members  Member[]
+  plans    Plan[]
   settings GymSettings?
-  users   User[]
-  members Member[]
-  plans   Plan[]
 }
 
 model User {
-  id           String @id @default(uuid())
+  id           String  @id @default(uuid())
   gymId        String
-  gym          Gym    @relation(fields: [gymId], references: [id])
-  email        String @unique
+  gym          Gym     @relation(fields: [gymId], references: [id])
+  email        String  @unique
   passwordHash String
-  role         String @default("receptionist")
-
-  @@index([gymId])
+  role         String  @default("receptionist")
+  fullName     String?
+  phone        String?
+  cedula       String?
 }
 
 model Member {

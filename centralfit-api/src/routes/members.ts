@@ -54,36 +54,56 @@ router.get('/', async (req: AuthRequest, res) => {
   res.json(result);
 });
 
-// Crear un miembro (opcionalmente con su primera suscripción)
+// Crear un miembro (opcionalmente con su primera suscripción + pago)
 router.post('/', async (req: AuthRequest, res) => {
   if (!req.gymId) return res.status(401).json({ error: 'No autorizado' });
-  const { fullName, cedula, phone, photoUrl, planId } = req.body;
+
+  const { fullName, cedula, phone, photoUrl, planId, startDate, method, reference } = req.body;
 
   if (!fullName || !cedula) {
     return res.status(400).json({ error: 'Nombre y cédula son requeridos' });
   }
 
   const member = await prisma.member.create({
-    data: { gymId: req.gymId as string, fullName, cedula, phone, photoUrl },
+    data: { gymId: req.gymId, fullName, cedula, phone, photoUrl },
   });
 
-  // Si viene un planId, crea la suscripción de una vez (como tu "Registro Rápido")
+  let subscription = null;
+  let transaction = null;
+
   if (planId) {
-    const plan = await prisma.plan.findFirst({
-      where: { id: planId, gymId: req.gymId },
-    });
+    const plan = await prisma.plan.findFirst({ where: { id: planId, gymId: req.gymId } });
 
     if (plan) {
-      const startDate = new Date();
-      const endDate = new Date(startDate.getTime() + plan.durationDays * 24 * 60 * 60 * 1000);
+      const start = startDate ? new Date(startDate) : new Date();
+      const end = new Date(start.getTime() + plan.durationDays * 24 * 60 * 60 * 1000);
 
-      await prisma.subscription.create({
-        data: { memberId: member.id, planId: plan.id, startDate, endDate },
+      const result = await prisma.$transaction(async (tx) => {
+        const sub = await tx.subscription.create({
+          data: { memberId: member.id, planId: plan.id, startDate: start, endDate: end },
+        });
+
+        const tr = method
+          ? await tx.transaction.create({
+              data: {
+                subscriptionId: sub.id,
+                amountUsd: plan.priceUsd,
+                amountBs: plan.priceBs,
+                method,
+                reference,
+              },
+            })
+          : null;
+
+        return { sub, tr };
       });
+
+      subscription = result.sub;
+      transaction = result.tr;
     }
   }
 
-  res.status(201).json(member);
+  res.status(201).json({ member, subscription, transaction });
 });
 
 // Buscar por cédula (para tu campo de búsqueda del front)

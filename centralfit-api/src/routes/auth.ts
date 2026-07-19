@@ -34,12 +34,11 @@ router.post('/login', async (req, res) => {
 });
 
 
-
 router.post('/register', async (req, res) => {
-  const { gymName, email, password } = req.body;
+  const { fullName, email, phone, cedula, gymName, address, gymPhone, password } = req.body;
 
-  if (!gymName || !email || !password) {
-    return res.status(400).json({ error: 'Nombre del gimnasio, email y contraseña son requeridos' });
+  if (!gymName || !email || !password || !fullName) {
+    return res.status(400).json({ error: 'Nombre, email, nombre del gimnasio y contraseña son requeridos' });
   }
 
   if (password.length < 8) {
@@ -56,22 +55,18 @@ router.post('/register', async (req, res) => {
   const gym = await prisma.gym.create({
     data: {
       name: gymName,
+      address,
+      phone: gymPhone,
       status: 'trial',
       users: {
-        create: {
-          email,
-          passwordHash,
-          role: 'owner',
-        },
+        create: { email, passwordHash, role: 'owner', fullName, phone, cedula },
       },
     },
     include: { users: true },
   });
 
   const newUser = gym.users[0];
-  if (!newUser) {
-    return res.status(500).json({ error: 'Error creando el usuario' });
-  }
+  if (!newUser) return res.status(500).json({ error: 'Error creando el usuario' });
 
   const token = jwt.sign(
     { userId: newUser.id, gymId: gym.id },
@@ -81,11 +76,9 @@ router.post('/register', async (req, res) => {
 
   res.status(201).json({
     token,
-    user: { id: newUser.id, email: newUser.email, role: newUser.role },
+    user: { id: newUser.id, email: newUser.email, role: newUser.role, fullName: newUser.fullName },
     gym: { id: gym.id, name: gym.name, status: gym.status },
   });
 });
-
-
 
 export default router;

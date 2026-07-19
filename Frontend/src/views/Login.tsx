@@ -1,15 +1,62 @@
+import { useState } from 'react';
+
 interface LoginProps {
   onLogin: () => void;
   onNavigateToRegister: () => void;
+  onLoginSuperAdmin: () => void;
 }
 
-export default function Login({ onLogin, onNavigateToRegister }: LoginProps) {
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
+export default function Login({ onLogin, onNavigateToRegister, onLoginSuperAdmin }: LoginProps) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch(`${API_URL}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || 'Credenciales inválidas');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Si "Recordarme" está activo, persiste entre sesiones (localStorage);
+      // si no, se borra al cerrar la pestaña (sessionStorage).
+      if (rememberMe) {
+        localStorage.setItem('token', data.token);
+      } else {
+        sessionStorage.setItem('token', data.token);
+      }
+
+      onLogin();
+    } catch {
+      setError('No se pudo conectar con el servidor. Intenta de nuevo.');
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="bg-surface text-on-surface font-body-md min-h-screen flex items-center justify-center relative overflow-hidden selection:bg-primary/30 selection:text-primary-fixed">
       {/* Ambient Background Effects */}
       <div className="absolute inset-0 z-0 bg-kinetic-grid opacity-50 pointer-events-none"></div>
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/5 rounded-full blur-[120px] pointer-events-none"></div>
-      
+
       {/* Login Card Container */}
       <main className="relative z-10 w-full max-w-md p-8 bg-surface-container rounded-xl border border-outline-variant shadow-[0_8px_32px_rgba(0,0,0,0.4)] flex flex-col gap-5 mx-4">
         {/* Brand Header */}
@@ -20,7 +67,7 @@ export default function Login({ onLogin, onNavigateToRegister }: LoginProps) {
             className="w-auto mb-2 mx-auto drop-shadow-[0_0_25px_rgba(44,195,107,0.6)] object-contain transition-all duration-200 h-40"
           />
           <div>
-            <p className="font-label-md text-label-md uppercase tracking-wider bg-gradient-to-r from-primary to-primary-fixed bg-clip-text text-transparent drop-shadow-sm">
+            <p className="font-label-md text-label-md uppercase tracking-wider bg-linear-to-r from-primary to-primary-fixed bg-clip-text text-transparent drop-shadow-sm">
               Gestión centralizada para cadenas fitness
             </p>
           </div>
@@ -30,28 +77,34 @@ export default function Login({ onLogin, onNavigateToRegister }: LoginProps) {
         <form
           aria-label="Formulario de inicio de sesión"
           className="flex flex-col gap-4"
-          onSubmit={(e) => {
-            e.preventDefault();
-            onLogin();
-          }}
+          onSubmit={handleSubmit}
         >
-          {/* Usuario Field */}
+          {error && (
+            <div className="bg-error/10 border border-error/30 rounded-lg px-4 py-2.5 flex items-center gap-2">
+              <span className="material-symbols-outlined text-error text-[18px]">error</span>
+              <p className="text-body-sm text-error">{error}</p>
+            </div>
+          )}
+
+          {/* Email Field */}
           <div className="flex flex-col gap-2">
-            <label className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider" htmlFor="usuario">
-              Usuario
+            <label className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider" htmlFor="email">
+              Correo Electrónico
             </label>
             <div className="relative group">
               <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors duration-200">
-                person
+                mail
               </span>
               <input
-                autoComplete="username"
+                autoComplete="email"
                 className="w-full bg-surface border border-outline-variant rounded-lg py-2.5 pl-12 pr-4 text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all duration-200 font-body-md text-body-md placeholder-outline/50 shadow-inner"
-                id="usuario"
-                name="usuario"
-                placeholder="Ingresa tu usuario"
+                id="email"
+                name="email"
+                placeholder="tu@correo.com"
                 required
-                type="text"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
               />
             </div>
           </div>
@@ -72,14 +125,19 @@ export default function Login({ onLogin, onNavigateToRegister }: LoginProps) {
                 name="password"
                 placeholder="••••••••"
                 required
-                type="password"
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
               />
               <button
-                aria-label="Mostrar contraseña"
+                aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-outline hover:text-on-surface transition-colors focus:outline-none cursor-pointer"
                 type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
               >
-                <span className="material-symbols-outlined text-[20px]">visibility_off</span>
+                <span className="material-symbols-outlined text-[20px]">
+                  {showPassword ? 'visibility_off' : 'visibility'}
+                </span>
               </button>
             </div>
           </div>
@@ -88,7 +146,12 @@ export default function Login({ onLogin, onNavigateToRegister }: LoginProps) {
           <div className="flex justify-between items-center mt-[-8px]">
             <label className="flex items-center gap-3 cursor-pointer group">
               <div className="relative flex items-center justify-center w-5 h-5 rounded border border-outline-variant bg-surface group-hover:border-primary transition-colors">
-                <input className="peer sr-only" type="checkbox" />
+                <input
+                  className="peer sr-only"
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                />
                 <span
                   className="material-symbols-outlined absolute text-[16px] text-primary opacity-0 peer-checked:opacity-100 transition-opacity"
                   style={{ fontVariationSettings: '"FILL" 1' }}
@@ -110,11 +173,21 @@ export default function Login({ onLogin, onNavigateToRegister }: LoginProps) {
 
           {/* Submit Action */}
           <button
-            className="mt-4 w-full bg-primary hover:bg-primary-fixed text-on-primary font-label-md text-label-md py-2.5 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 shadow-[0_4px_12px_rgba(81,224,132,0.15)] hover:shadow-[0_6px_16px_rgba(81,224,132,0.25)] hover:-translate-y-[1px] active:translate-y-[1px] active:shadow-none focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-surface focus:ring-primary cursor-pointer"
+            className="mt-4 w-full bg-primary hover:bg-primary-fixed text-on-primary font-label-md text-label-md py-2.5 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 shadow-[0_4px_12px_rgba(81,224,132,0.15)] hover:shadow-[0_6px_16px_rgba(81,224,132,0.25)] hover:-translate-y-px active:translate-y-px active:shadow-none focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-surface focus:ring-primary cursor-pointer disabled:opacity-60"
             type="submit"
+            disabled={isSubmitting}
           >
-            Ingresar
-            <span className="material-symbols-outlined text-[20px]">login</span>
+            {isSubmitting ? (
+              <>
+                <span className="material-symbols-outlined animate-spin text-[20px]">sync</span>
+                Verificando...
+              </>
+            ) : (
+              <>
+                Ingresar
+                <span className="material-symbols-outlined text-[20px]">login</span>
+              </>
+            )}
           </button>
 
           <div className="text-center mt-2">
@@ -131,6 +204,15 @@ export default function Login({ onLogin, onNavigateToRegister }: LoginProps) {
           </div>
         </form>
       </main>
+      <div className="absolute bottom-2 left-1  text-on-surface-variant text-body-sm font-body-sm">
+        <button
+              type="button"
+              onClick={onLoginSuperAdmin}
+              className="text-on-surface-variant text-xs hover:text-on-surface transition-colors mt-4 opacity-50 hover:opacity-100"
+            >
+              Super Admin
+            </button>
+      </div>
     </div>
   );
 }

@@ -7,16 +7,42 @@ import Members from './views/Members';
 import Plans from './views/Plans';
 import Reports from './views/Reports';
 import Layout from './components/Layout';
+import SuperAdmin from './views/SuperAdmin';
+import SuperAdminLogin from './views/SuperAdminLogin';
 
 export default function App() {
   const [currentView, setCurrentView] = useState<ViewState>('login');
 
   if (currentView === 'login') {
-    return <Login onLogin={() => setCurrentView('dashboard')} onNavigateToRegister={() => setCurrentView('register')} />;
+    return (
+      <Login
+        onLogin={() => setCurrentView('dashboard')}
+        onNavigateToRegister={() => setCurrentView('register')}
+        onLoginSuperAdmin={() => setCurrentView('superadminlogin')}
+      />
+    );
   }
 
   if (currentView === 'register') {
-    return <Register onRegisterComplete={() => setCurrentView('login')} onClose={() => setCurrentView('login')} />;
+    return (
+      <Register
+        onRegisterComplete={() => setCurrentView('dashboard')}
+        onClose={() => setCurrentView('login')}
+      />
+    );
+  }
+
+  if (currentView === 'superadminlogin') {
+    return (
+      <SuperAdminLogin
+        onLoginSuccess={() => setCurrentView('superadmin')}
+        onBack={() => setCurrentView('login')}
+      />
+    );
+  }
+
+  if (currentView === 'superadmin') {
+    return <SuperAdmin onLogout={() => setCurrentView('login')} />;
   }
 
   return (

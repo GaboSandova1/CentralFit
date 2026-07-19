@@ -57,4 +57,62 @@ router.get('/summary', async (req: AuthRequest, res) => {
   res.json({ totalUsd, totalBs, byMethod, newMemberships, renewals });
 });
 
+
+// Lista de transacciones recientes (tabla "Resumen de Transacciones")
+router.get('/transactions', async (req: AuthRequest, res) => {
+  if (!req.gymId) return res.status(401).json({ error: 'No autorizado' });
+
+  const transactions = await prisma.transaction.findMany({
+    where: { subscription: { member: { gymId: req.gymId } } },
+    include: { subscription: { include: { member: true, plan: true } } },
+    orderBy: { createdAt: 'desc' },
+    take: 20,
+  });
+
+  const result = transactions.map((t) => ({
+    id: t.id,
+    memberName: t.subscription.member.fullName,
+    plan: t.subscription.plan.name,
+    method: t.method,
+    amountUsd: t.amountUsd,
+    amountBs: t.amountBs,
+    reference: t.reference,
+    createdAt: t.createdAt,
+  }));
+
+  res.json(result);
+});
+
+// Ingresos por mes, últimos 6 meses en USD (gráfico "Ingresos Mensuales")
+router.get('/monthly', async (req: AuthRequest, res) => {
+  if (!req.gymId) return res.status(401).json({ error: 'No autorizado' });
+
+  const now = new Date();
+  const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+
+  const transactions = await prisma.transaction.findMany({
+    where: {
+      createdAt: { gte: sixMonthsAgo },
+      subscription: { member: { gymId: req.gymId } },
+    },
+    select: { amountUsd: true, createdAt: true },
+  });
+
+  const monthlyTotals: Record<string, number> = {};
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    monthlyTotals[d.toLocaleDateString('es-VE', { month: 'short' })] = 0;
+  }
+
+  for (const t of transactions) {
+    const key = t.createdAt.toLocaleDateString('es-VE', { month: 'short' });
+    if (key in monthlyTotals) {
+      monthlyTotals[key] = (monthlyTotals[key] ?? 0) + Number(t.amountUsd);
+    }
+  }
+
+  res.json(Object.entries(monthlyTotals).map(([month, total]) => ({ month, total })));
+});
+
+
 export default router;
