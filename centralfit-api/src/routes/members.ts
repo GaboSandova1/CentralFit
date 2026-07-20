@@ -155,7 +155,7 @@ router.post('/:id/renew', async (req: AuthRequest, res) => {
     });
   }
 
-  const startDate = new Date();
+  const startDate = req.body.startDate ? new Date(req.body.startDate) : new Date();
   const endDate = new Date(startDate.getTime() + plan.durationDays * 24 * 60 * 60 * 1000);
 
   const result = await prisma.$transaction(async (tx) => {

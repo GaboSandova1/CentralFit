@@ -14,7 +14,15 @@ router.get('/', async (req: AuthRequest, res) => {
     where: { gymId: req.gymId },
     orderBy: { durationDays: 'asc' },
   });
-  res.json(plans);
+
+  const counts = await prisma.subscription.groupBy({
+    by: ['planId'],
+    where: { endDate: { gte: new Date() }, plan: { gymId: req.gymId } },
+    _count: true,
+  });
+  const countMap = new Map(counts.map((c) => [c.planId, c._count]));
+
+  res.json(plans.map((plan) => ({ ...plan, activeMemberCount: countMap.get(plan.id) ?? 0 })));
 });
 
 // Crear un plan nuevo
@@ -62,20 +70,21 @@ router.patch('/:id', async (req: AuthRequest, res) => {
 // Eliminar un plan
 router.delete('/:id', async (req: AuthRequest, res) => {
   if (!req.gymId) return res.status(401).json({ error: 'No autorizado' });
-
   const id = req.params.id;
   if (typeof id !== 'string') return res.status(400).json({ error: 'ID inválido' });
 
-  const existing = await prisma.plan.findFirst({
-    where: { id, gymId: req.gymId },
-  });
+  const existing = await prisma.plan.findFirst({ where: { id, gymId: req.gymId } });
+  if (!existing) return res.status(404).json({ error: 'Plan no encontrado' });
 
-  if (!existing) {
-    return res.status(404).json({ error: 'Plan no encontrado' });
+  try {
+    await prisma.plan.delete({ where: { id } });
+    res.status(204).send();
+  } catch (err: any) {
+    if (err.code === 'P2003') {
+      return res.status(409).json({ error: 'No se puede eliminar este plan porque tiene miembros o historial de pagos asociado.' });
+    }
+    throw err;
   }
-
-  await prisma.plan.delete({ where: { id } });
-  res.status(204).send();
 });
 
 export default router;

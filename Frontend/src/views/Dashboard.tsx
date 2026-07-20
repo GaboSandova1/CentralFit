@@ -32,6 +32,7 @@ function daysUntil(dateStr: string | null): string {
 
 export default function Dashboard() {
   const [renovationModalOpen, setRenovationModalOpen] = useState(false);
+  const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const [plans, setPlans] = useState<Plan[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -380,7 +381,7 @@ export default function Dashboard() {
                         </td>
                         <td className="p-3">
                           <button
-                            onClick={() => setRenovationModalOpen(true)}
+                            onClick={() => { setSelectedMember(member); setRenovationModalOpen(true); }}
                             className="flex items-center gap-1 font-label-sm text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer text-[14px]"
                           >
                             <span className="material-symbols-outlined">{isOverdue ? 'autorenew' : 'chat'}</span>
@@ -396,7 +397,12 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
-      <RenovationModal isOpen={renovationModalOpen} onClose={() => setRenovationModalOpen(false)} />
+      <RenovationModal
+        isOpen={renovationModalOpen}
+        onClose={() => setRenovationModalOpen(false)}
+        onRenewed={loadData}
+        member={selectedMember ? { id: selectedMember.id, fullName: selectedMember.fullName, cedula: selectedMember.cedula, plan: selectedMember.plan, endDate: selectedMember.endDate } : undefined}
+      />
     </>
   );
 }

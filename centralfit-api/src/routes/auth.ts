@@ -2,6 +2,7 @@ import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { prisma } from '../prisma';
+import { requireAuth, AuthRequest } from '../middleware/auth';
 
 const router = Router();
 
@@ -80,5 +81,48 @@ router.post('/register', async (req, res) => {
     gym: { id: gym.id, name: gym.name, status: gym.status },
   });
 });
+
+
+router.get('/me', requireAuth, async (req: AuthRequest, res) => {
+  if (!req.userId) return res.status(401).json({ error: 'No autorizado' });
+
+  const user = await prisma.user.findUnique({
+    where: { id: req.userId },
+    include: { gym: true },
+  });
+  if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
+
+  res.json({
+    id: user.id,
+    email: user.email,
+    fullName: user.fullName,
+    role: user.role,
+    gym: { id: user.gym.id, name: user.gym.name },
+  });
+});
+
+router.patch('/password', requireAuth, async (req: AuthRequest, res) => {
+  if (!req.userId) return res.status(401).json({ error: 'No autorizado' });
+
+  const { currentPassword, newPassword } = req.body;
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({ error: 'Contraseña actual y nueva son requeridas' });
+  }
+  if (newPassword.length < 8) {
+    return res.status(400).json({ error: 'La nueva contraseña debe tener al menos 8 caracteres' });
+  }
+
+  const user = await prisma.user.findUnique({ where: { id: req.userId } });
+  if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
+
+  const valid = await bcrypt.compare(currentPassword, user.passwordHash);
+  if (!valid) return res.status(401).json({ error: 'La contraseña actual es incorrecta' });
+
+  const passwordHash = await bcrypt.hash(newPassword, 10);
+  await prisma.user.update({ where: { id: req.userId }, data: { passwordHash } });
+
+  res.json({ success: true });
+});
+
 
 export default router;

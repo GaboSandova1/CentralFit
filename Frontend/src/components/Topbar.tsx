@@ -1,9 +1,21 @@
+import { useEffect, useState } from 'react';
+import { apiFetch } from '../lib/api';
+
 interface TopbarProps {
   onMenuClick: () => void;
   onOpenProfile: () => void;
 }
 
 export default function Topbar({ onMenuClick, onOpenProfile }: TopbarProps) {
+  const [usdToBs, setUsdToBs] = useState<string | null>(null);
+
+  useEffect(() => {
+    apiFetch('/exchange-rate')
+      .then((res) => res.json())
+      .then((data) => setUsdToBs(data.usdToBs))
+      .catch(() => setUsdToBs(null));
+  }, []);
+
   return (
     <header className="h-topbar-height fixed top-0 right-0 left-0 md:left-sidebar-width z-20 bg-surface dark:bg-surface border-b border-outline-variant dark:border-outline-variant flex justify-between items-center px-gutter w-full md:w-[calc(100%-var(--spacing-sidebar-width))]">
       <div className="flex items-center gap-3">
@@ -18,7 +30,7 @@ export default function Topbar({ onMenuClick, onOpenProfile }: TopbarProps) {
       <div className="flex items-center gap-4">
         <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-container-high border border-outline-variant text-on-surface-variant font-label-sm text-label-sm">
           <span className="material-symbols-outlined text-primary text-[16px]">payments</span>
-          $1 = 36.50 Bs
+          {usdToBs ? `$1 = ${usdToBs} Bs` : 'Cargando tasa...'}
         </div>
         <button className="text-on-surface-variant hover:text-primary transition-colors relative cursor-pointer">
           <span className="material-symbols-outlined">notifications</span>

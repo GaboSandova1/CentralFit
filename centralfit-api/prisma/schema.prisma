@@ -73,7 +73,7 @@ model Plan {
 model Subscription {
   id        String   @id @default(uuid())
   memberId  String
-  member    Member   @relation(fields: [memberId], references: [id])
+  member    Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
   planId    String
   plan      Plan     @relation(fields: [planId], references: [id])
   startDate DateTime
@@ -88,7 +88,7 @@ model Subscription {
 model Transaction {
   id             String       @id @default(uuid())
   subscriptionId String
-  subscription   Subscription @relation(fields: [subscriptionId], references: [id])
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
   amountUsd      Decimal
   amountBs       Decimal
   method         String

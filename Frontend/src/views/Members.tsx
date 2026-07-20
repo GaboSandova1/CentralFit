@@ -282,6 +282,8 @@ export default function Members() {
       <RenovationModal
         isOpen={renovationModalOpen}
         onClose={() => setRenovationModalOpen(false)}
+        onRenewed={loadMembers}
+        member={selectedMember ? { id: selectedMember.id, fullName: selectedMember.fullName, cedula: selectedMember.cedula, plan: selectedMember.plan, endDate: selectedMember.endDate } : undefined}
       />
     </>
   );

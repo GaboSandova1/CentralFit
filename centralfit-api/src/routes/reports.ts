@@ -62,17 +62,57 @@ router.get('/summary', async (req: AuthRequest, res) => {
 router.get('/transactions', async (req: AuthRequest, res) => {
   if (!req.gymId) return res.status(401).json({ error: 'No autorizado' });
 
+  const { method, planId, search, range, limit } = req.query;
+
+  const memberFilter: Record<string, unknown> = {};
+  if (search && typeof search === 'string') {
+    memberFilter.OR = [
+      { fullName: { contains: search, mode: 'insensitive' } },
+      { cedula: { contains: search } },
+    ];
+  }
+
+  const subscriptionFilter: Record<string, unknown> = {
+    member: { gymId: req.gymId, ...memberFilter },
+  };
+  if (planId && typeof planId === 'string') {
+    subscriptionFilter.planId = planId;
+  }
+
+  const where: Record<string, unknown> = { subscription: subscriptionFilter };
+
+  if (method && typeof method === 'string') {
+    where.method = method;
+  }
+
+  if (range === 'today') {
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+    where.createdAt = { gte: start };
+  } else if (range === 'week') {
+    const start = new Date();
+    start.setDate(start.getDate() - 7);
+    where.createdAt = { gte: start };
+  } else if (range === 'month') {
+    const start = new Date();
+    start.setDate(1);
+    start.setHours(0, 0, 0, 0);
+    where.createdAt = { gte: start };
+  }
+
   const transactions = await prisma.transaction.findMany({
-    where: { subscription: { member: { gymId: req.gymId } } },
+    where,
     include: { subscription: { include: { member: true, plan: true } } },
     orderBy: { createdAt: 'desc' },
-    take: 20,
+    take: limit && typeof limit === 'string' ? parseInt(limit, 10) : 20,
   });
 
   const result = transactions.map((t) => ({
     id: t.id,
     memberName: t.subscription.member.fullName,
+    memberCedula: t.subscription.member.cedula,
     plan: t.subscription.plan.name,
+    planId: t.subscription.planId,
     method: t.method,
     amountUsd: t.amountUsd,
     amountBs: t.amountBs,
