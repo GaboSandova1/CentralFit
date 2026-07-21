@@ -151,7 +151,11 @@ export default function Sidebar({ currentView, onViewChange, isOpen, onClose, on
             <span className="font-body-sm text-body-sm">Configuración</span>
           </a>
           <a
-            onClick={() => navigate('login')}
+            onClick={() => {
+              localStorage.removeItem('token');
+              sessionStorage.removeItem('token');
+              navigate('login');
+            }}
             className="flex items-center gap-3 px-4 py-2 rounded-lg hover:text-error hover:bg-error/10 transition-colors duration-200 cursor-pointer text-error"
           >
             <span className="material-symbols-outlined">logout</span>

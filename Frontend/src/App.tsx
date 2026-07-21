@@ -10,8 +10,14 @@ import Layout from './components/Layout';
 import SuperAdmin from './views/SuperAdmin';
 import SuperAdminLogin from './views/SuperAdminLogin';
 
+function getInitialView(): ViewState {
+  if (localStorage.getItem('adminToken')) return 'superadmin';
+  if (localStorage.getItem('token') || sessionStorage.getItem('token')) return 'dashboard';
+  return 'login';
+}
+
 export default function App() {
-  const [currentView, setCurrentView] = useState<ViewState>('login');
+  const [currentView, setCurrentView] = useState<ViewState>(getInitialView);
 
   if (currentView === 'login') {
     return (

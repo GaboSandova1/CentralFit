@@ -13,7 +13,7 @@ router.post('/login', async (req, res) => {
     return res.status(400).json({ error: 'Email y contraseña son requeridos' });
   }
 
-  const user = await prisma.user.findUnique({ where: { email } });
+  const user = await prisma.user.findUnique({ where: { email }, include: { gym: true } });
 
   if (!user) {
     return res.status(401).json({ error: 'Credenciales inválidas' });
@@ -23,6 +23,10 @@ router.post('/login', async (req, res) => {
 
   if (!validPassword) {
     return res.status(401).json({ error: 'Credenciales inválidas' });
+  }
+
+  if (user.gym.status === 'suspended') {
+    return res.status(403).json({ error: 'Este gimnasio ha sido suspendido. Contacta a soporte.' });
   }
 
   const token = jwt.sign(

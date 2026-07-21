@@ -75,21 +75,37 @@ export default function Dashboard() {
   const totalMembers = members.length;
   const activeMembers = members.filter((m) => m.status === 'activo').length;
   const dueSoonMembers = members.filter((m) => m.status === 'por_vencer').length;
-  // "Vencidos" agrupa vencido + en_gracia: ambos significan que el plan ya pasó su fecha límite
   const overdueMembers = members.filter((m) => m.status === 'vencido' || m.status === 'en_gracia').length;
 
   const attentionList = members.filter((m) =>
     ['por_vencer', 'vencido', 'en_gracia'].includes(m.status)
   );
 
+  const updateDigitsOnly = (field: 'cedula' | 'phone', value: string, maxLength: number) => {
+    const digitsOnly = value.replace(/\D/g, '').slice(0, maxLength);
+    setForm((prev) => ({ ...prev, [field]: digitsOnly }));
+  };
+
   const handleFormChange = (field: keyof typeof form, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
+  const validateForm = (): string | null => {
+    if (!form.fullName.trim()) return 'El nombre completo es requerido';
+    if (!/^\d{7,8}$/.test(form.cedula)) return 'La cédula debe tener entre 7 y 8 números';
+    if (form.phone && !/^\d{11}$/.test(form.phone)) return 'El teléfono debe tener exactamente 11 números';
+    if (form.planId && !form.method) return 'Selecciona un método de pago';
+    if (form.planId && form.method !== 'Efectivo' && !form.reference.trim()) {
+      return 'La referencia es requerida para este método de pago';
+    }
+    return null;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.fullName.trim() || !form.cedula.trim()) {
-      setError('Nombre y cédula son requeridos');
+    const validationError = validateForm();
+    if (validationError) {
+      setError(validationError);
       return;
     }
 
@@ -107,7 +123,7 @@ export default function Dashboard() {
           planId: form.planId || undefined,
           startDate: form.startDate,
           method: form.planId ? form.method : undefined,
-          reference: form.reference || undefined,
+          reference: form.planId && form.method !== 'Efectivo' ? form.reference : undefined,
         }),
       });
 
@@ -140,11 +156,21 @@ export default function Dashboard() {
   return (
     <>
       {/* Page Header */}
-      <div className="mb-6">
-        <h2 className="font-headline-md text-headline-md text-on-surface">Resumen del Tablero</h2>
-        <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">
-          Bienvenido de nuevo. Esto es lo que está pasando hoy.
-        </p>
+      <div className="mb-6 flex items-start justify-between gap-4">
+        <div>
+          <h2 className="font-headline-md text-headline-md text-on-surface">Resumen del Tablero</h2>
+          <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">
+            Bienvenido de nuevo. Esto es lo que está pasando hoy.
+          </p>
+        </div>
+        <button
+          onClick={loadData}
+          disabled={isLoading}
+          className="flex items-center gap-2 px-3 py-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded-lg transition-colors cursor-pointer text-[13px] disabled:opacity-60 shrink-0"
+        >
+          <span className={`material-symbols-outlined text-[18px] ${isLoading ? 'animate-spin' : ''}`}>refresh</span>
+          Actualizar
+        </button>
       </div>
 
       {error && (
@@ -161,9 +187,7 @@ export default function Dashboard() {
             <h3 className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Total de Miembros</h3>
             <span className="material-symbols-outlined text-primary">group</span>
           </div>
-          <div className="flex items-baseline gap-2">
-            <span className="font-headline-md text-headline-md text-on-surface">{isLoading ? '—' : totalMembers}</span>
-          </div>
+          <span className="font-headline-md text-headline-md text-on-surface">{isLoading ? '—' : totalMembers}</span>
         </div>
 
         <div className="bg-surface-container rounded-xl border border-outline-variant p-4 flex flex-col justify-between hover:border-primary/50 transition-colors">
@@ -232,20 +256,24 @@ export default function Dashboard() {
                 <label className="font-label-sm text-label-sm text-on-surface-variant uppercase">Cédula</label>
                 <input
                   type="text"
-                  placeholder="V-00000000"
+                  inputMode="numeric"
+                  maxLength={8}
+                  placeholder="12345678"
                   className="bg-surface border border-outline-variant rounded-md px-3 py-1.5 text-body-sm text-on-surface focus:outline-none focus:border-primary"
                   value={form.cedula}
-                  onChange={(e) => handleFormChange('cedula', e.target.value)}
+                  onChange={(e) => updateDigitsOnly('cedula', e.target.value, 8)}
                 />
               </div>
               <div className="flex flex-col gap-1">
                 <label className="font-label-sm text-label-sm text-on-surface-variant uppercase">Teléfono</label>
                 <input
                   type="text"
-                  placeholder="+58 412-000"
+                  inputMode="numeric"
+                  maxLength={11}
+                  placeholder="04121234567"
                   className="bg-surface border border-outline-variant rounded-md px-3 py-1.5 text-body-sm text-on-surface focus:outline-none focus:border-primary"
                   value={form.phone}
-                  onChange={(e) => handleFormChange('phone', e.target.value)}
+                  onChange={(e) => updateDigitsOnly('phone', e.target.value, 11)}
                 />
               </div>
             </div>
@@ -276,7 +304,7 @@ export default function Dashboard() {
             </div>
 
             {form.planId && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className={`grid grid-cols-1 gap-3 ${form.method !== 'Efectivo' ? 'sm:grid-cols-2' : ''}`}>
                 <div className="flex flex-col gap-1">
                   <label className="font-label-sm text-label-sm text-on-surface-variant uppercase">Método de Pago</label>
                   <select
@@ -290,16 +318,18 @@ export default function Dashboard() {
                     <option>Binance</option>
                   </select>
                 </div>
-                <div className="flex flex-col gap-1">
-                  <label className="font-label-sm text-label-sm text-on-surface-variant uppercase"># Referencia</label>
-                  <input
-                    type="text"
-                    placeholder="0000"
-                    className="bg-surface border border-outline-variant rounded-md px-3 py-1.5 text-body-sm text-on-surface focus:outline-none focus:border-primary"
-                    value={form.reference}
-                    onChange={(e) => handleFormChange('reference', e.target.value)}
-                  />
-                </div>
+                {form.method !== 'Efectivo' && (
+                  <div className="flex flex-col gap-1">
+                    <label className="font-label-sm text-label-sm text-on-surface-variant uppercase"># Referencia</label>
+                    <input
+                      type="text"
+                      placeholder="0000"
+                      className="bg-surface border border-outline-variant rounded-md px-3 py-1.5 text-body-sm text-on-surface focus:outline-none focus:border-primary"
+                      value={form.reference}
+                      onChange={(e) => handleFormChange('reference', e.target.value)}
+                    />
+                  </div>
+                )}
               </div>
             )}
 
@@ -381,8 +411,15 @@ export default function Dashboard() {
                         </td>
                         <td className="p-3">
                           <button
-                            onClick={() => { setSelectedMember(member); setRenovationModalOpen(true); }}
-                            className="flex items-center gap-1 font-label-sm text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer text-[14px]"
+                            onClick={() => {
+                              // "Recordar" todavía no hace nada — se conectará más adelante (ej. WhatsApp/SMS)
+                              if (!isOverdue) return;
+                              setSelectedMember(member);
+                              setRenovationModalOpen(true);
+                            }}
+                            className={`flex items-center gap-1 font-label-sm transition-colors text-[14px] ${
+                              isOverdue ? 'text-on-surface-variant hover:text-on-surface cursor-pointer' : 'text-on-surface-variant/50 cursor-not-allowed'
+                            }`}
                           >
                             <span className="material-symbols-outlined">{isOverdue ? 'autorenew' : 'chat'}</span>
                             {isOverdue ? 'Renovar' : 'Recordar'}

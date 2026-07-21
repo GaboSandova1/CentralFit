@@ -51,6 +51,7 @@ model Member {
 
   subscriptions Subscription[]
 
+  @@unique([gymId, cedula])
   @@index([gymId])
   @@index([cedula])
 }

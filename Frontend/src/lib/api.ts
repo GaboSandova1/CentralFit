@@ -16,9 +16,10 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
     },
   });
 
-  if (response.status === 401) {
+  if (response.status === 401 || response.status === 403) {
     localStorage.removeItem('token');
     sessionStorage.removeItem('token');
+    localStorage.removeItem('adminToken');
     window.location.reload();
   }
 

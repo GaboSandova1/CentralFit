@@ -4,7 +4,7 @@ import { apiFetch } from '../lib/api';
 interface RenovationModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onRenewed?: () => void;
+  onRenewed?: () => void | Promise<void>;
   member?: {
     id: string;
     fullName: string;
@@ -26,8 +26,13 @@ interface SearchedMember {
   id: string;
   fullName: string;
   cedula: string;
-  plan?: string | null;
-  endDate?: string | null;
+}
+
+function formatDMY(date: Date): string {
+  const d = String(date.getDate()).padStart(2, '0');
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const y = date.getFullYear();
+  return `${d}-${m}-${y}`;
 }
 
 export default function RenovationModal({ isOpen, onClose, onRenewed, member }: RenovationModalProps) {
@@ -72,9 +77,7 @@ export default function RenovationModal({ isOpen, onClose, onRenewed, member }: 
 
   const selectedPlan = plans.find((p) => p.id === selectedPlanId);
   const endDatePreview = selectedPlan
-    ? new Date(new Date(startDate).getTime() + selectedPlan.durationDays * 24 * 60 * 60 * 1000)
-        .toISOString()
-        .slice(0, 10)
+    ? formatDMY(new Date(new Date(startDate).getTime() + selectedPlan.durationDays * 24 * 60 * 60 * 1000))
     : '';
 
   const handleSearch = async () => {
@@ -89,8 +92,14 @@ export default function RenovationModal({ isOpen, onClose, onRenewed, member }: 
         setSearchedMember(null);
         return;
       }
-      const found = results[0];
-      setSearchedMember({ id: found.id, fullName: found.fullName, cedula: found.cedula });
+      // Coincidencia exacta de cédula, no solo "contiene" (evita traer al miembro equivocado)
+      const exactMatch = results.find((m: SearchedMember) => m.cedula === cedulaInput);
+      if (!exactMatch) {
+        setSearchError('No se encontró ningún miembro con esa cédula exacta.');
+        setSearchedMember(null);
+        return;
+      }
+      setSearchedMember({ id: exactMatch.id, fullName: exactMatch.fullName, cedula: exactMatch.cedula });
     } catch {
       setSearchError('No se pudo buscar el miembro.');
     } finally {
@@ -134,7 +143,9 @@ export default function RenovationModal({ isOpen, onClose, onRenewed, member }: 
         throw new Error(data.error || 'No se pudo procesar la renovación');
       }
 
-      onRenewed?.();
+      // Esperamos a que la lista del padre termine de recargarse ANTES de cerrar el modal,
+      // para que los cambios ya estén visibles apenas se cierre.
+      await onRenewed?.();
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo procesar la renovación');
@@ -173,7 +184,7 @@ export default function RenovationModal({ isOpen, onClose, onRenewed, member }: 
                     placeholder="Ej: 12345678"
                     type="text"
                     value={cedulaInput}
-                    onChange={(e) => setCedulaInput(e.target.value)}
+                    onChange={(e) => setCedulaInput(e.target.value.replace(/\D/g, '').slice(0, 8))}
                     onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                   />
                 </div>
@@ -294,8 +305,9 @@ export default function RenovationModal({ isOpen, onClose, onRenewed, member }: 
               <input
                 className="w-full bg-background border border-outline-variant rounded-DEFAULT py-1.5 pl-10 pr-3 text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors font-body-md text-body-md placeholder-on-surface-variant/50"
                 id="referencia"
-                placeholder="Obligatorio para Pago Móvil"
+                placeholder={method === 'Efectivo' ? 'No aplica para Efectivo' : 'Obligatorio para este método'}
                 type="text"
+                disabled={method === 'Efectivo'}
                 value={reference}
                 onChange={(e) => setReference(e.target.value)}
               />

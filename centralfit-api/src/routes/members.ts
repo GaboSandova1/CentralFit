@@ -64,9 +64,17 @@ router.post('/', async (req: AuthRequest, res) => {
     return res.status(400).json({ error: 'Nombre y cédula son requeridos' });
   }
 
-  const member = await prisma.member.create({
-    data: { gymId: req.gymId, fullName, cedula, phone, photoUrl },
-  });
+  let member;
+  try {
+    member = await prisma.member.create({
+      data: { gymId: req.gymId, fullName, cedula, phone, photoUrl },
+    });
+  } catch (err: any) {
+    if (err.code === 'P2002') {
+      return res.status(409).json({ error: 'Ya existe un miembro con esta cédula en tu gimnasio.' });
+    }
+    throw err;
+  }
 
   let subscription = null;
   let transaction = null;
@@ -197,12 +205,22 @@ router.patch('/:id', async (req: AuthRequest, res) => {
 
   const { fullName, cedula, phone, photoUrl } = req.body;
 
-  const member = await prisma.member.update({
-    where: { id },
-    data: { fullName, cedula, phone, photoUrl },
-  });
 
-  res.json(member);
+
+
+  try {
+    const member = await prisma.member.update({
+      where: { id },
+      data: { fullName, cedula, phone, photoUrl },
+    });
+    res.json(member);
+  } catch (err: any) {
+    if (err.code === 'P2002') {
+      return res.status(409).json({ error: 'Ya existe otro miembro con esta cédula en tu gimnasio.' });
+    }
+    throw err;
+  }
+
 });
 
 // Eliminar un miembro
