@@ -113,11 +113,21 @@ export default function Members() {
 
   return (
     <>
-      <div className="mb-6">
-        <h2 className="font-headline-md text-headline-md text-on-surface">Directorio de Miembros</h2>
-        <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">
-          Gestiona suscripciones activas, visualiza vencimientos y actualiza perfiles de miembros.
-        </p>
+      <div className="mb-6 flex items-start justify-between gap-4">
+        <div>
+          <h2 className="font-headline-md text-headline-md text-on-surface">Directorio de Miembros</h2>
+          <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">
+            Gestiona suscripciones activas, visualiza vencimientos y actualiza perfiles de miembros.
+          </p>
+        </div>
+        <button
+          onClick={loadMembers}
+          disabled={isLoading}
+          className="flex items-center gap-2 px-3 py-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded-lg transition-colors cursor-pointer text-[13px] disabled:opacity-60 shrink-0"
+        >
+          <span className={`material-symbols-outlined text-[18px] ${isLoading ? 'animate-spin' : ''}`}>refresh</span>
+          Actualizar
+        </button>
       </div>
 
       {error && (

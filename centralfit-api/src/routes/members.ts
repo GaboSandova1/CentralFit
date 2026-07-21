@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { prisma } from '../prisma';
 import { requireAuth, AuthRequest } from '../middleware/auth';
+import { getCurrentRate } from '../lib/exchangeRate';
 
 const router = Router();
 
@@ -57,7 +58,6 @@ router.get('/', async (req: AuthRequest, res) => {
 // Crear un miembro (opcionalmente con su primera suscripción + pago)
 router.post('/', async (req: AuthRequest, res) => {
   if (!req.gymId) return res.status(401).json({ error: 'No autorizado' });
-
   const { fullName, cedula, phone, photoUrl, planId, startDate, method, reference } = req.body;
 
   if (!fullName || !cedula) {
@@ -86,6 +86,20 @@ router.post('/', async (req: AuthRequest, res) => {
       const start = startDate ? new Date(startDate) : new Date();
       const end = new Date(start.getTime() + plan.durationDays * 24 * 60 * 60 * 1000);
 
+      let amountUsd: number | null = null;
+      let amountBs: number | null = null;
+      let exchangeRateUsed: number | null = null;
+
+      if (method) {
+        if (method === 'Efectivo') {
+          amountUsd = Number(plan.priceUsd);
+        } else {
+          const rate = await getCurrentRate();
+          amountBs = Number(plan.priceUsd) * rate.usdToBs;
+          exchangeRateUsed = rate.usdToBs;
+        }
+      }
+
       const result = await prisma.$transaction(async (tx) => {
         const sub = await tx.subscription.create({
           data: { memberId: member.id, planId: plan.id, startDate: start, endDate: end },
@@ -93,13 +107,7 @@ router.post('/', async (req: AuthRequest, res) => {
 
         const tr = method
           ? await tx.transaction.create({
-              data: {
-                subscriptionId: sub.id,
-                amountUsd: plan.priceUsd,
-                amountBs: plan.priceBs,
-                method,
-                reference,
-              },
+              data: { subscriptionId: sub.id, amountUsd, amountBs, exchangeRateUsed, method, reference },
             })
           : null;
 
@@ -142,8 +150,10 @@ router.post('/:id/renew', async (req: AuthRequest, res) => {
   const memberId = req.params.id;
   if (typeof memberId !== 'string') return res.status(400).json({ error: 'ID inválido' });
 
-  const { planId, payments } = req.body;
-  // payments: [{ method: string, amountUsd: number, amountBs: number, reference?: string }]
+  const { planId, startDate, payments } = req.body;
+  // payments: [{ method: string, amount?: number, reference?: string }]
+  // "amount" es opcional: si se omite y hay un solo pago, se asume el precio completo del plan.
+  // Efectivo => amount en USD. Cualquier otro método => amount en Bs.
 
   if (!planId || !Array.isArray(payments) || payments.length === 0) {
     return res.status(400).json({ error: 'Plan y al menos un método de pago son requeridos' });
@@ -155,29 +165,51 @@ router.post('/:id/renew', async (req: AuthRequest, res) => {
   const plan = await prisma.plan.findFirst({ where: { id: planId, gymId: req.gymId } });
   if (!plan) return res.status(404).json({ error: 'Plan no encontrado' });
 
-  // Confirma que la suma de los pagos cubre el precio del plan (con margen de 1 centavo por redondeo)
-  const totalPaidUsd = payments.reduce((sum, p) => sum + Number(p.amountUsd || 0), 0);
-  if (Math.abs(totalPaidUsd - Number(plan.priceUsd)) > 0.01) {
+  let rate;
+  try {
+    rate = await getCurrentRate();
+  } catch {
+    return res.status(503).json({ error: 'No se pudo obtener la tasa de cambio para procesar el pago' });
+  }
+
+  const planPriceUsd = Number(plan.priceUsd);
+
+  const resolvedPayments = payments.map((p: { method: string; amount?: number; reference?: string }) => {
+    const isBs = p.method !== 'Efectivo';
+    let amount = p.amount;
+    if (amount === undefined) {
+      amount = payments.length === 1 ? (isBs ? planPriceUsd * rate.usdToBs : planPriceUsd) : 0;
+    }
+    return { method: p.method, reference: p.reference, isBs, amount };
+  });
+
+  const totalUsdEquivalent = resolvedPayments.reduce(
+    (sum, p) => sum + (p.isBs ? p.amount / rate.usdToBs : p.amount),
+    0
+  );
+
+  if (Math.abs(totalUsdEquivalent - planPriceUsd) > 0.05) {
     return res.status(400).json({
-      error: `La suma de los pagos ($${totalPaidUsd}) no coincide con el precio del plan ($${plan.priceUsd})`,
+      error: `La suma de los pagos ($${totalUsdEquivalent.toFixed(2)} equivalentes) no coincide con el precio del plan ($${planPriceUsd.toFixed(2)})`,
     });
   }
 
-  const startDate = req.body.startDate ? new Date(req.body.startDate) : new Date();
-  const endDate = new Date(startDate.getTime() + plan.durationDays * 24 * 60 * 60 * 1000);
+  const start = startDate ? new Date(startDate) : new Date();
+  const end = new Date(start.getTime() + plan.durationDays * 24 * 60 * 60 * 1000);
 
   const result = await prisma.$transaction(async (tx) => {
     const subscription = await tx.subscription.create({
-      data: { memberId: member.id, planId: plan.id, startDate, endDate },
+      data: { memberId: member.id, planId: plan.id, startDate: start, endDate: end },
     });
 
     const transactions = await Promise.all(
-      payments.map((p: { method: string; amountUsd: number; amountBs: number; reference?: string }) =>
+      resolvedPayments.map((p) =>
         tx.transaction.create({
           data: {
             subscriptionId: subscription.id,
-            amountUsd: p.amountUsd,
-            amountBs: p.amountBs,
+            amountUsd: p.isBs ? null : p.amount,
+            amountBs: p.isBs ? p.amount : null,
+            exchangeRateUsed: p.isBs ? rate.usdToBs : null,
             method: p.method,
             reference: p.reference,
           },
@@ -204,9 +236,6 @@ router.patch('/:id', async (req: AuthRequest, res) => {
   if (!existing) return res.status(404).json({ error: 'Miembro no encontrado' });
 
   const { fullName, cedula, phone, photoUrl } = req.body;
-
-
-
 
   try {
     const member = await prisma.member.update({

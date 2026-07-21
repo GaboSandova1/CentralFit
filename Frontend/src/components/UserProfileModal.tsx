@@ -14,6 +14,11 @@ interface Profile {
   gym: { id: string; name: string };
 }
 
+const ROLE_LABELS: Record<string, string> = {
+  owner: 'Propietario',
+  receptionist: 'Recepcionista',
+};
+
 export default function UserProfileModal({ isOpen, onClose }: UserProfileModalProps) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -127,7 +132,7 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
           <div className="bg-surface rounded-lg p-3 border border-surface-variant grid gap-4">
             <div className="grid grid-cols-3 items-center border-b border-surface-variant/50 pb-2">
               <span className="col-span-1 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Rol</span>
-              <span className="col-span-2 font-body-md text-body-md text-on-surface text-right capitalize">{profile?.role ?? '—'}</span>
+              <span className="col-span-2 font-body-md text-body-md text-on-surface text-right">{profile ? (ROLE_LABELS[profile.role] ?? profile.role) : '—'}</span>
             </div>
             <div className="grid grid-cols-3 items-center">
               <span className="col-span-1 font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Nombre del gimnasio</span>

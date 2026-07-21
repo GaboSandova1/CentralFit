@@ -1,12 +1,11 @@
 import { Router } from 'express';
 import { prisma } from '../prisma';
 import { requireAuth, AuthRequest } from '../middleware/auth';
+import { getCurrentRate } from '../lib/exchangeRate';
 
 const router = Router();
-
 router.use(requireAuth);
 
-// Listar todos los planes del gimnasio
 router.get('/', async (req: AuthRequest, res) => {
   if (!req.gymId) return res.status(401).json({ error: 'No autorizado' });
 
@@ -22,52 +21,55 @@ router.get('/', async (req: AuthRequest, res) => {
   });
   const countMap = new Map(counts.map((c) => [c.planId, c._count]));
 
-  res.json(plans.map((plan) => ({ ...plan, activeMemberCount: countMap.get(plan.id) ?? 0 })));
+  let rate: { usdToBs: number } | null = null;
+  try {
+    rate = await getCurrentRate();
+  } catch {
+    rate = null;
+  }
+
+  res.json(
+    plans.map((plan) => ({
+      ...plan,
+      activeMemberCount: countMap.get(plan.id) ?? 0,
+      priceBsEstimate: rate ? Number(plan.priceUsd) * rate.usdToBs : null,
+    }))
+  );
 });
 
-// Crear un plan nuevo
 router.post('/', async (req: AuthRequest, res) => {
   if (!req.gymId) return res.status(401).json({ error: 'No autorizado' });
+  const { name, durationDays, priceUsd, description } = req.body;
 
-  const { name, durationDays, priceUsd, priceBs, description } = req.body;
-
-  if (!name || !durationDays || !priceUsd || !priceBs) {
-    return res.status(400).json({ error: 'Faltan campos requeridos' });
+  if (!name || !durationDays || !priceUsd) {
+    return res.status(400).json({ error: 'Nombre, duración y precio son requeridos' });
   }
 
   const plan = await prisma.plan.create({
-    data: { gymId: req.gymId, name, durationDays, priceUsd, priceBs, description },
+    data: { gymId: req.gymId, name, durationDays, priceUsd, description },
   });
 
   res.status(201).json(plan);
 });
 
-// Editar un plan
 router.patch('/:id', async (req: AuthRequest, res) => {
   if (!req.gymId) return res.status(401).json({ error: 'No autorizado' });
-
   const id = req.params.id;
   if (typeof id !== 'string') return res.status(400).json({ error: 'ID inválido' });
 
-  const { name, durationDays, priceUsd, priceBs, description } = req.body;
+  const existing = await prisma.plan.findFirst({ where: { id, gymId: req.gymId } });
+  if (!existing) return res.status(404).json({ error: 'Plan no encontrado' });
 
-  const existing = await prisma.plan.findFirst({
-    where: { id, gymId: req.gymId },
-  });
-
-  if (!existing) {
-    return res.status(404).json({ error: 'Plan no encontrado' });
-  }
+  const { name, durationDays, priceUsd, description } = req.body;
 
   const plan = await prisma.plan.update({
     where: { id },
-    data: { name, durationDays, priceUsd, priceBs, description },
+    data: { name, durationDays, priceUsd, description },
   });
 
   res.json(plan);
 });
 
-// Eliminar un plan
 router.delete('/:id', async (req: AuthRequest, res) => {
   if (!req.gymId) return res.status(401).json({ error: 'No autorizado' });
   const id = req.params.id;

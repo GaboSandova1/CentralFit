@@ -63,7 +63,6 @@ model Plan {
   name         String
   durationDays Int
   priceUsd     Decimal
-  priceBs      Decimal
   description  String?
 
   subscriptions Subscription[]
@@ -87,14 +86,15 @@ model Subscription {
 }
 
 model Transaction {
-  id             String       @id @default(uuid())
-  subscriptionId String
-  subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
-  amountUsd      Decimal
-  amountBs       Decimal
-  method         String
-  reference      String?
-  createdAt      DateTime     @default(now())
+  id               String       @id @default(uuid())
+  subscriptionId   String
+  subscription     Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  amountUsd        Decimal?
+  amountBs         Decimal?
+  exchangeRateUsed Decimal?
+  method           String
+  reference        String?
+  createdAt        DateTime     @default(now())
 
   @@index([subscriptionId])
 }

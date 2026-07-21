@@ -23,10 +23,12 @@ router.get('/summary', async (req: AuthRequest, res) => {
 
   console.log('2. Transacciones encontradas:', transactions.length);
 
-  const totalUsd = transactions.reduce((sum, t) => sum + Number(t.amountUsd), 0);
-  const totalBs = transactions.reduce((sum, t) => sum + Number(t.amountBs), 0);
+  const totalUsd = transactions.reduce((sum, t) => sum + (t.amountUsd ? Number(t.amountUsd) : 0), 0);
+  const totalBs = transactions.reduce((sum, t) => sum + (t.amountBs ? Number(t.amountBs) : 0), 0);
+
+  // Cuenta transacciones por método (no dólares) — refleja cuántas veces se usó cada uno
   const byMethod = transactions.reduce((acc, t) => {
-    acc[t.method] = (acc[t.method] || 0) + Number(t.amountUsd);
+    acc[t.method] = (acc[t.method] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
 
@@ -135,7 +137,7 @@ router.get('/monthly', async (req: AuthRequest, res) => {
       createdAt: { gte: sixMonthsAgo },
       subscription: { member: { gymId: req.gymId } },
     },
-    select: { amountUsd: true, createdAt: true },
+    select: { amountUsd: true, amountBs: true, exchangeRateUsed: true, createdAt: true },
   });
 
   const monthlyTotals: Record<string, number> = {};
@@ -146,13 +148,19 @@ router.get('/monthly', async (req: AuthRequest, res) => {
 
   for (const t of transactions) {
     const key = t.createdAt.toLocaleDateString('es-VE', { month: 'short' });
-    if (key in monthlyTotals) {
-      monthlyTotals[key] = (monthlyTotals[key] ?? 0) + Number(t.amountUsd);
+    if (!(key in monthlyTotals)) continue;
+
+    let usdEquivalent = 0;
+    if (t.amountUsd) {
+      usdEquivalent = Number(t.amountUsd);
+    } else if (t.amountBs && t.exchangeRateUsed) {
+      usdEquivalent = Number(t.amountBs) / Number(t.exchangeRateUsed);
     }
+
+    monthlyTotals[key] = (monthlyTotals[key] ?? 0) + usdEquivalent;
   }
 
   res.json(Object.entries(monthlyTotals).map(([month, total]) => ({ month, total })));
 });
-
 
 export default router;
