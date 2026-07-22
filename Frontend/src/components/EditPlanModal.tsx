@@ -10,7 +10,6 @@ interface EditPlanModalProps {
     name: string;
     durationDays: number;
     priceUsd: string;
-    priceBs: string;
     description: string | null;
   };
 }
@@ -19,8 +18,8 @@ export default function EditPlanModal({ isOpen, onClose, onSaved, plan }: EditPl
   const [name, setName] = useState('');
   const [durationDays, setDurationDays] = useState('');
   const [priceUsd, setPriceUsd] = useState('');
-  const [priceBs, setPriceBs] = useState('');
   const [description, setDescription] = useState('');
+  const [rate, setRate] = useState<number | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -29,18 +28,27 @@ export default function EditPlanModal({ isOpen, onClose, onSaved, plan }: EditPl
       setName(plan.name);
       setDurationDays(String(plan.durationDays));
       setPriceUsd(plan.priceUsd);
-      setPriceBs(plan.priceBs);
       setDescription(plan.description ?? '');
       setError(null);
     }
   }, [plan]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    apiFetch('/exchange-rate')
+      .then((res) => res.json())
+      .then((data) => setRate(Number(data.usdToBs)))
+      .catch(() => setRate(null));
+  }, [isOpen]);
+
   if (!isOpen) return null;
+
+  const bsEstimate = priceUsd && rate ? (Number(priceUsd) * rate).toLocaleString('es-VE', { maximumFractionDigits: 2 }) : null;
 
   const handleSave = async () => {
     if (!plan) return;
-    if (!name.trim() || !durationDays || !priceUsd || !priceBs) {
-      setError('Nombre, duración y ambos precios son requeridos');
+    if (!name.trim() || !durationDays || !priceUsd) {
+      setError('Nombre, duración y precio son requeridos');
       return;
     }
 
@@ -54,7 +62,6 @@ export default function EditPlanModal({ isOpen, onClose, onSaved, plan }: EditPl
           name,
           durationDays: Number(durationDays),
           priceUsd: Number(priceUsd),
-          priceBs: Number(priceBs),
           description: description || undefined,
         }),
       });
@@ -87,7 +94,7 @@ export default function EditPlanModal({ isOpen, onClose, onSaved, plan }: EditPl
         {/* Modal Body */}
         <div className="p-4 flex flex-col gap-4 overflow-y-auto flex-1">
           <div className="flex flex-col gap-1">
-            <p className="text-body-sm font-body-sm text-on-surface-variant">Modifica los parámetros de este plan.</p>
+            <p className="text-body-sm font-body-sm text-on-surface-variant">Modifica los parámetros de este plan. El precio se fija en USD; el equivalente en Bs se calcula solo.</p>
           </div>
 
           {error && (
@@ -109,7 +116,7 @@ export default function EditPlanModal({ isOpen, onClose, onSaved, plan }: EditPl
               />
             </div>
             {/* Duration and Price Fields */}
-            <div className="grid gap-3 grid-cols-1 sm:grid-cols-3">
+            <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
               {/* Duration Field */}
               <div className="flex flex-col gap-2">
                 <label className="text-label-md font-label-md text-on-surface">Duración (Días)</label>
@@ -135,19 +142,9 @@ export default function EditPlanModal({ isOpen, onClose, onSaved, plan }: EditPl
                     onChange={(e) => setPriceUsd(e.target.value)}
                   />
                 </div>
-              </div>
-              {/* Price Field (Bs) */}
-              <div className="flex flex-col gap-2">
-                <label className="text-label-md font-label-md text-on-surface">Precio (Bs)</label>
-                <div className="flex items-center bg-surface-container-low border border-outline-variant rounded-lg px-3">
-                  <span className="text-on-surface-variant mr-1">Bs</span>
-                  <input
-                    className="w-full bg-transparent border-none py-3 text-on-surface focus:ring-0 outline-none font-body-md text-body-md"
-                    type="text"
-                    value={priceBs}
-                    onChange={(e) => setPriceBs(e.target.value)}
-                  />
-                </div>
+                <p className="text-[11px] text-on-surface-variant">
+                  {bsEstimate ? `≈ Bs ${bsEstimate}` : 'Tasa no disponible'}
+                </p>
               </div>
             </div>
             <div className="flex flex-col gap-2">

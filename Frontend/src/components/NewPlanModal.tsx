@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { apiFetch } from '../lib/api';
 
 interface NewPlanModalProps {
@@ -10,19 +10,28 @@ interface NewPlanModalProps {
 export default function NewPlanModal({ isOpen, onClose, onCreated }: NewPlanModalProps) {
   const [name, setName] = useState('');
   const [durationDays, setDurationDays] = useState('30');
-  const [priceUsd, setPriceUsd] = useState('0.00');
-  const [priceBs, setPriceBs] = useState('0.00');
+  const [priceUsd, setPriceUsd] = useState('');
   const [description, setDescription] = useState('');
+  const [rate, setRate] = useState<number | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    apiFetch('/exchange-rate')
+      .then((res) => res.json())
+      .then((data) => setRate(Number(data.usdToBs)))
+      .catch(() => setRate(null));
+  }, [isOpen]);
+
   if (!isOpen) return null;
+
+  const bsEstimate = priceUsd && rate ? (Number(priceUsd) * rate).toLocaleString('es-VE', { maximumFractionDigits: 2 }) : null;
 
   const resetForm = () => {
     setName('');
     setDurationDays('30');
-    setPriceUsd('0.00');
-    setPriceBs('0.00');
+    setPriceUsd('');
     setDescription('');
     setError(null);
   };
@@ -33,8 +42,8 @@ export default function NewPlanModal({ isOpen, onClose, onCreated }: NewPlanModa
   };
 
   const handleCreate = async () => {
-    if (!name.trim() || !durationDays || !priceUsd || !priceBs) {
-      setError('Nombre, duración y ambos precios son requeridos');
+    if (!name.trim() || !durationDays || !priceUsd) {
+      setError('Nombre, duración y precio son requeridos');
       return;
     }
 
@@ -48,7 +57,6 @@ export default function NewPlanModal({ isOpen, onClose, onCreated }: NewPlanModa
           name,
           durationDays: Number(durationDays),
           priceUsd: Number(priceUsd),
-          priceBs: Number(priceBs),
           description: description || undefined,
         }),
       });
@@ -81,7 +89,7 @@ export default function NewPlanModal({ isOpen, onClose, onCreated }: NewPlanModa
         {/* Modal Body */}
         <div className="p-4 flex flex-col gap-4 overflow-y-auto flex-1">
           <div className="flex flex-col gap-1">
-            <p className="text-body-sm font-body-sm text-on-surface-variant">Define los parámetros para una nueva oferta de membresía.</p>
+            <p className="text-body-sm font-body-sm text-on-surface-variant">Define los parámetros para una nueva oferta de membresía. El precio se fija en USD; el equivalente en Bs se calcula solo con la tasa BCV del día.</p>
           </div>
 
           {error && (
@@ -95,18 +103,16 @@ export default function NewPlanModal({ isOpen, onClose, onCreated }: NewPlanModa
             {/* Name Field */}
             <div className="flex flex-col gap-2">
               <label className="text-label-md font-label-md text-on-surface">Nombre del Plan</label>
-              <div className="relative">
-                <input
-                  className="w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-3 text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all font-body-md"
-                  placeholder="Ej. Plan Premium"
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                />
-              </div>
+              <input
+                className="w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-3 text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all font-body-md"
+                placeholder="Ej. Plan Premium"
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
             </div>
             {/* Duration and Price Fields */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {/* Duration Field */}
               <div className="flex flex-col gap-2">
                 <label className="text-label-md font-label-md text-on-surface">Duración (Días)</label>
@@ -127,25 +133,15 @@ export default function NewPlanModal({ isOpen, onClose, onCreated }: NewPlanModa
                   <span className="text-on-surface-variant mr-1">$</span>
                   <input
                     className="w-full bg-transparent border-none py-3 text-on-surface focus:ring-0 outline-none font-body-md text-body-md"
+                    placeholder="0.00"
                     type="text"
                     value={priceUsd}
                     onChange={(e) => setPriceUsd(e.target.value)}
                   />
                 </div>
-              </div>
-              {/* Price Bs Field */}
-              <div className="flex flex-col gap-2">
-                <label className="text-label-md font-label-md text-on-surface">Precio (Bs)</label>
-                <div className="flex items-center bg-surface-container-low border border-outline-variant rounded-lg px-3">
-                  <span className="text-on-surface-variant mr-1">Bs</span>
-                  <input
-                    className="w-full bg-transparent border-none py-3 text-on-surface focus:ring-0 outline-none font-body-md text-body-md"
-                    placeholder="0.00"
-                    type="text"
-                    value={priceBs}
-                    onChange={(e) => setPriceBs(e.target.value)}
-                  />
-                </div>
+                <p className="text-[11px] text-on-surface-variant">
+                  {bsEstimate ? `≈ Bs ${bsEstimate}` : 'Escribe un precio para ver el equivalente en Bs'}
+                </p>
               </div>
             </div>
             <div className="flex flex-col gap-2">

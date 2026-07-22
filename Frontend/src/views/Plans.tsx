@@ -9,7 +9,7 @@ interface Plan {
   name: string;
   durationDays: number;
   priceUsd: string;
-  priceBs: string;
+  priceBsEstimate: number | null;
   description: string | null;
   activeMemberCount: number;
 }
@@ -142,7 +142,9 @@ export default function Plans() {
                   <span className="font-headline-md text-headline-md text-on-surface">${Number(plan.priceUsd).toFixed(0)}</span>
                   <span className="font-body-sm text-body-sm text-on-surface-variant">.{(Number(plan.priceUsd) % 1).toFixed(2).slice(2)}</span>
                 </div>
-                <p className="font-label-sm text-label-sm text-on-surface-variant">Bs {Number(plan.priceBs).toLocaleString('es-VE')}</p>
+                <p className="font-label-sm text-label-sm text-on-surface-variant">
+                  {plan.priceBsEstimate !== null ? `≈ Bs ${plan.priceBsEstimate.toLocaleString('es-VE', { maximumFractionDigits: 2 })}` : 'Tasa no disponible'}
+                </p>
               </div>
               <div className="flex gap-2 w-full md:w-auto justify-end md:justify-end">
                 <button
