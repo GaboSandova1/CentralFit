@@ -15,8 +15,8 @@ interface Transaction {
   memberName: string;
   plan: string;
   method: string;
-  amountUsd: string;
-  amountBs: string;
+  amountUsd: string | null;
+  amountBs: string | null;
   reference: string | null;
   createdAt: string;
 }
@@ -47,6 +47,7 @@ function formatDateTime(dateStr: string): string {
 
 export default function Reports() {
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
+  const [historyInitialRange, setHistoryInitialRange] = useState('');
   const [summary, setSummary] = useState<Summary | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [monthly, setMonthly] = useState<MonthlyPoint[]>([]);
@@ -82,13 +83,12 @@ export default function Reports() {
     loadData();
   }, []);
 
-  const cashUsd = summary?.byMethod['Efectivo'] ?? 0;
-  const totalByMethod = summary ? Object.values(summary.byMethod).reduce((a, b) => a + b, 0) : 0;
+  const totalMethodCount = summary ? Object.values(summary.byMethod).reduce((a, b) => a + b, 0) : 0;
   const methodPercentages = summary
-    ? Object.entries(summary.byMethod).map(([method, amount]) => ({
+    ? Object.entries(summary.byMethod).map(([method, count]) => ({
         method,
-        amount,
-        percentage: totalByMethod > 0 ? Math.round((amount / totalByMethod) * 100) : 0,
+        count,
+        percentage: totalMethodCount > 0 ? Math.round((count / totalMethodCount) * 100) : 0,
       }))
     : [];
 
@@ -110,6 +110,13 @@ export default function Reports() {
             Resumen financiero y operativo del gimnasio.
           </p>
         </div>
+        <button
+          onClick={() => { setHistoryInitialRange('today'); setHistoryModalOpen(true); }}
+          className="flex items-center gap-2 px-4 py-2 bg-primary/20 border border-primary/30 text-primary rounded-md font-label-sm hover:bg-primary/30 transition-colors cursor-pointer"
+        >
+          <span className="material-symbols-outlined text-[18px]">calendar_today</span>
+          Transacciones del Día
+        </button>
       </div>
 
       {error && (
@@ -142,7 +149,7 @@ export default function Reports() {
             <h3 className="font-label-sm text-[11px] text-on-surface-variant uppercase tracking-wider leading-tight">Ingresos Totales (Efectivo $)</h3>
             <span className="material-symbols-outlined text-tertiary">local_atm</span>
           </div>
-          <span className="font-headline-md text-headline-md text-on-surface">{isLoading ? '—' : `$${cashUsd.toLocaleString('es-VE')}`}</span>
+          <span className="font-headline-md text-headline-md text-on-surface">{isLoading ? '—' : `$${(summary?.totalUsd ?? 0).toLocaleString('es-VE')}`}</span>
         </div>
 
         <div className="bg-surface-container rounded-xl border border-outline-variant p-4 flex flex-col justify-between">
@@ -204,8 +211,8 @@ export default function Reports() {
                     <td className="p-3 font-body-sm text-on-surface-variant">{tx.plan}</td>
                     <td className="p-3 font-body-sm text-on-surface-variant">{tx.method}</td>
                     <td className="p-3 font-body-sm text-on-surface-variant">{formatDateTime(tx.createdAt)}</td>
-                    <td className="p-3 font-body-sm text-on-surface font-medium text-right">${Number(tx.amountUsd).toFixed(2)}</td>
-                    <td className="p-3 font-body-sm text-on-surface-variant text-right">Bs {Number(tx.amountBs).toLocaleString('es-VE')}</td>
+                    <td className="p-3 font-body-sm text-on-surface font-medium text-right">{tx.amountUsd !== null ? `$${Number(tx.amountUsd).toFixed(2)}` : '—'}</td>
+                    <td className="p-3 font-body-sm text-on-surface-variant text-right">{tx.amountBs !== null ? `Bs ${Number(tx.amountBs).toLocaleString('es-VE')}` : '—'}</td>
                   </tr>
                 ))}
               </tbody>
@@ -295,7 +302,11 @@ export default function Reports() {
           )}
         </div>
       </div>
-      <TransactionHistoryModal isOpen={historyModalOpen} onClose={() => setHistoryModalOpen(false)} />
+      <TransactionHistoryModal
+        isOpen={historyModalOpen}
+        onClose={() => { setHistoryModalOpen(false); setHistoryInitialRange(''); }}
+        initialRange={historyInitialRange}
+      />
     </>
   );
 }

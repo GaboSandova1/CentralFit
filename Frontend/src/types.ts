@@ -6,4 +6,5 @@ export type ViewState =
   | 'members'
   | 'plans'
   | 'reports'
-  | 'superadmin';
+  | 'superadmin'
+  | 'splash';

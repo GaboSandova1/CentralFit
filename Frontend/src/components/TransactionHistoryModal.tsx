@@ -4,6 +4,7 @@ import { apiFetch } from '../lib/api';
 interface TransactionHistoryModalProps {
   isOpen: boolean;
   onClose: () => void;
+  initialRange?: string;
 }
 
 interface Transaction {
@@ -13,8 +14,8 @@ interface Transaction {
   plan: string;
   planId: string;
   method: string;
-  amountUsd: string;
-  amountBs: string;
+  amountUsd: string | null;
+  amountBs: string | null;
   reference: string | null;
   createdAt: string;
 }
@@ -39,8 +40,8 @@ function downloadCsv(transactions: Transaction[]) {
     t.plan,
     t.method,
     new Date(t.createdAt).toLocaleString('es-VE'),
-    t.amountUsd,
-    t.amountBs,
+    t.amountUsd ?? '',
+    t.amountBs ?? '',
     t.reference ?? '',
   ]);
 
@@ -57,7 +58,7 @@ function downloadCsv(transactions: Transaction[]) {
   URL.revokeObjectURL(url);
 }
 
-export default function TransactionHistoryModal({ isOpen, onClose }: TransactionHistoryModalProps) {
+export default function TransactionHistoryModal({ isOpen, onClose, initialRange }: TransactionHistoryModalProps) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [plans, setPlans] = useState<Plan[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -66,7 +67,12 @@ export default function TransactionHistoryModal({ isOpen, onClose }: Transaction
   const [search, setSearch] = useState('');
   const [method, setMethod] = useState('');
   const [planId, setPlanId] = useState('');
-  const [range, setRange] = useState('');
+  const [range, setRange] = useState(initialRange ?? '');
+
+  useEffect(() => {
+    if (isOpen) setRange(initialRange ?? '');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, initialRange]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -100,7 +106,6 @@ export default function TransactionHistoryModal({ isOpen, onClose }: Transaction
       }
     };
 
-    // Debounce corto para la búsqueda de texto
     const timeout = setTimeout(loadTransactions, 300);
     return () => clearTimeout(timeout);
   }, [isOpen, search, method, planId, range]);
@@ -221,8 +226,8 @@ export default function TransactionHistoryModal({ isOpen, onClose }: Transaction
                     <td className="p-3 font-body-sm text-on-surface-variant">{tx.method}</td>
                     <td className="p-3 font-body-sm text-on-surface-variant">{formatDateTime(tx.createdAt)}</td>
                     <td className="p-3 font-body-sm text-on-surface-variant">{tx.reference ?? '—'}</td>
-                    <td className="p-3 font-body-sm text-on-surface font-medium text-right">${Number(tx.amountUsd).toFixed(2)}</td>
-                    <td className="p-3 font-body-sm text-on-surface-variant text-right">Bs {Number(tx.amountBs).toLocaleString('es-VE')}</td>
+                    <td className="p-3 font-body-sm text-on-surface font-medium text-right">{tx.amountUsd !== null ? `$${Number(tx.amountUsd).toFixed(2)}` : '—'}</td>
+                    <td className="p-3 font-body-sm text-on-surface-variant text-right">{tx.amountBs !== null ? `Bs ${Number(tx.amountBs).toLocaleString('es-VE')}` : '—'}</td>
                   </tr>
                 ))}
               </tbody>

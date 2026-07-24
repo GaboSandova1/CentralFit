@@ -9,6 +9,7 @@ import Reports from './views/Reports';
 import Layout from './components/Layout';
 import SuperAdmin from './views/SuperAdmin';
 import SuperAdminLogin from './views/SuperAdminLogin';
+import Splash from './views/Splash';
 
 function getInitialView(): ViewState {
   if (localStorage.getItem('adminToken')) return 'superadmin';
@@ -17,7 +18,17 @@ function getInitialView(): ViewState {
 }
 
 export default function App() {
-  const [currentView, setCurrentView] = useState<ViewState>(getInitialView);
+
+  // const [currentView, setCurrentView] = useState<ViewState>('splash');
+
+  
+
+
+  const [currentView, setCurrentView] = useState<ViewState>('splash');
+
+  if (currentView === 'splash') {
+    return <Splash onComplete={() => setCurrentView('login')} />;
+  }
 
   if (currentView === 'login') {
     return (
