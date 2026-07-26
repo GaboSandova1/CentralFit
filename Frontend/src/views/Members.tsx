@@ -11,6 +11,7 @@ interface Member {
   phone: string | null;
   photoUrl: string | null;
   plan: string | null;
+  startDate: string | null; // <--- AGREGAR
   endDate: string | null;
   status: 'sin_plan' | 'activo' | 'por_vencer' | 'en_gracia' | 'vencido';
 }
@@ -210,6 +211,7 @@ export default function Members() {
                 <tr className="border-b border-outline-variant bg-surface-container-lowest">
                   <th className="p-3 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider w-[250px]">Nombre del Miembro</th>
                   <th className="p-3 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Plan de Suscripción</th>
+                  <th className="p-3 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Fecha de Inicio</th> 
                   <th className="p-3 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Fecha de Vencimiento</th>
                   <th className="p-3 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Estado</th>
                   <th className="p-3 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Acciones</th>
@@ -234,6 +236,9 @@ export default function Members() {
                       </div>
                     </td>
                     <td className="p-3 font-body-sm text-on-surface-variant text-[14px]">{member.plan ?? 'Sin plan'}</td>
+                    {/* NUEVA CELDA */}
+                    <td className="p-3 font-body-sm text-on-surface-variant text-[14px]">{formatDate(member.startDate)}</td>
+                    {/* FIN NUEVA CELDA */}
                     <td className="p-3 font-body-sm text-on-surface-variant text-[14px]">{formatDate(member.endDate)}</td>
                     <td className="p-3">
                       <span className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-[12px] font-semibold border min-w-[80px] ${STATUS_STYLES[member.status]}`}>

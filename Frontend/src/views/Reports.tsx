@@ -31,11 +31,11 @@ interface ExchangeRate {
   eurToBs: string | null;
 }
 
-const METHOD_COLORS: Record<string, string> = {
-  Zelle: 'bg-primary',
-  Efectivo: 'bg-tertiary',
-  'Pago Móvil': 'bg-on-surface',
-  Binance: 'bg-surface-container-highest',
+const METHOD_COLORS_HEX: Record<string, string> = {
+  Zelle: '#51e084',
+  Efectivo: '#ffb86e',
+  'Pago Móvil': '#dee3eb',
+  Binance: '#869486',
 };
 
 function formatDateTime(dateStr: string): string {
@@ -54,6 +54,9 @@ export default function Reports() {
   const [rate, setRate] = useState<ExchangeRate | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Estado para la torta interactiva
+  const [hoveredMethod, setHoveredMethod] = useState<string | null>(null);
 
   const loadData = async () => {
     setIsLoading(true);
@@ -95,8 +98,8 @@ export default function Reports() {
   const maxMonthly = Math.max(1, ...monthly.map((m) => m.total));
   const chartWidth = 100;
   const chartPoints = monthly.map((m, i) => {
-    const x = monthly.length > 1 ? (i / (monthly.length - 1)) * chartWidth : 0;
-    const y = 100 - (m.total / maxMonthly) * 90;
+    const x = monthly.length > 1 ? (i / (monthly.length - 1)) * chartWidth : 50;
+    const y = 100 - (m.total / maxMonthly) * 85 - 5; // 5% de padding arriba
     return { x, y };
   });
   const polylinePoints = chartPoints.map((p) => `${p.x},${p.y}`).join(' ');
@@ -115,7 +118,7 @@ export default function Reports() {
           className="flex items-center gap-2 px-4 py-2 bg-primary/20 border border-primary/30 text-primary rounded-md font-label-sm hover:bg-primary/30 transition-colors cursor-pointer"
         >
           <span className="material-symbols-outlined text-[18px]">calendar_today</span>
-          Transacciones del Día
+          Historial de Transacciones
         </button>
       </div>
 
@@ -223,40 +226,80 @@ export default function Reports() {
 
       {/* Charts area */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Line Chart */}
         <div className="lg:col-span-2 bg-surface-container rounded-xl border border-outline-variant p-4">
           <div className="flex justify-between items-start mb-3">
             <h3 className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Ingresos Mensuales (USD)</h3>
           </div>
           {isLoading ? (
-            <div className="h-[160px] flex items-center justify-center text-on-surface-variant">
+            <div className="h-[240px] flex items-center justify-center text-on-surface-variant">
               <span className="material-symbols-outlined animate-spin">sync</span>
             </div>
+          ) : monthly.length === 0 ? (
+            <div className="h-[240px] flex items-center justify-center text-on-surface-variant text-sm">
+              No hay datos suficientes para mostrar el gráfico.
+            </div>
           ) : (
-            <div className="h-[160px] w-full flex items-end justify-between px-2 relative">
-              <div className="absolute left-0 bottom-0 top-0 flex flex-col justify-between text-[10px] text-on-surface-variant">
+            <div className="relative h-[240px] w-full pt-4">
+              {/* Eje Y */}
+              <div className="absolute left-0 top-4 bottom-8 w-10 flex flex-col justify-between text-[10px] text-on-surface-variant text-right pr-2">
                 <span>${maxMonthly.toLocaleString('es-VE')}</span>
+                <span>${Math.round(maxMonthly / 2).toLocaleString('es-VE')}</span>
                 <span>$0</span>
               </div>
 
-              <div className="ml-8 w-full h-full relative">
-                <div className="absolute inset-0 flex flex-col justify-between opacity-10">
-                  {[1, 2, 3, 4].map((i) => <div key={i} className="border-b border-on-surface-variant w-full"></div>)}
+              {/* Contenedor del Gráfico */}
+              <div className="ml-10 h-[calc(100%-32px)] relative border-l border-b border-outline-variant/50">
+                {/* Grid lines */}
+                <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
+                  <div className="border-t border-dashed border-outline-variant/20 w-full"></div>
+                  <div className="border-t border-dashed border-outline-variant/20 w-full"></div>
+                  <div className="border-t border-dashed border-outline-variant/20 w-full"></div>
                 </div>
-                <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none" viewBox="0 0 100 100">
-                  <polyline points={polylinePoints} fill="none" stroke="var(--color-primary)" strokeWidth="1.5" />
-                  {chartPoints.map((p, i) => (
-                    <circle key={i} cx={p.x} cy={p.y} r="1.5" fill="var(--color-surface)" stroke="var(--color-primary)" strokeWidth="1" />
-                  ))}
+
+                {/* SVG */}
+                <svg className="absolute inset-0 w-full h-full overflow-visible pointer-events-none" preserveAspectRatio="none" viewBox="0 0 100 100">
+                  <defs>
+                    <linearGradient id="grad" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" style={{ stopColor: 'var(--color-primary)', stopOpacity: 0.4 }} />
+                      <stop offset="100%" style={{ stopColor: 'var(--color-primary)', stopOpacity: 0 }} />
+                    </linearGradient>
+                  </defs>
+                  <polygon points={`0,100 ${polylinePoints} 100,100`} fill="url(#grad)" />
+                  <polyline points={polylinePoints} fill="none" stroke="var(--color-primary)" strokeWidth="2" vectorEffect="non-scaling-stroke" strokeLinejoin="round" strokeLinecap="round" />
                 </svg>
+
+                {/* Puntos Interactivos */}
+                {chartPoints.map((p, i) => (
+                  <div key={i} className="absolute group z-10" style={{ left: `${p.x}%`, top: `${p.y}%`, transform: 'translate(-50%, -50%)' }}>
+                    <div className="w-4 h-4 rounded-full bg-surface border-2 border-primary cursor-pointer transition-transform group-hover:scale-150"></div>
+                    <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 hidden group-hover:flex flex-col items-center bg-surface-container-highest border border-outline-variant text-on-surface text-[11px] px-2 py-1 rounded shadow-xl whitespace-nowrap z-20">
+                      <span className="font-bold text-primary">${monthly[i].total.toLocaleString('es-VE')}</span>
+                      <span className="text-on-surface-variant">{monthly[i].month}</span>
+                    </div>
+                  </div>
+                ))}
               </div>
 
-              <div className="absolute left-8 bottom-[-20px] right-0 flex justify-between text-[10px] text-on-surface-variant">
-                {monthly.map((m) => <span key={m.month}>{m.month}</span>)}
+              {/* Eje X (Meses) */}
+              <div className="ml-10 mt-2 relative h-4">
+                {monthly.map((m, i) => {
+                  const x = monthly.length > 1 ? (i / (monthly.length - 1)) * 100 : 50;
+                  let align = 'translateX(-50%)';
+                  if (i === 0) align = 'translateX(0%)';
+                  if (i === monthly.length - 1) align = 'translateX(-100%)';
+                  return (
+                    <span key={i} className="absolute text-[10px] text-on-surface-variant whitespace-nowrap" style={{ left: `${x}%`, transform: align }}>
+                      {m.month}
+                    </span>
+                  );
+                })}
               </div>
             </div>
           )}
         </div>
 
+        {/* Donut Chart */}
         <div className="lg:col-span-1 bg-surface-container rounded-xl border border-outline-variant p-4 flex flex-col">
           <h3 className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-3">Métodos de Pago</h3>
           {methodPercentages.length === 0 ? (
@@ -265,35 +308,64 @@ export default function Reports() {
             </div>
           ) : (
             <>
-              <div className="flex-1 flex flex-col justify-center items-center">
-                <div
-                  className="w-32 h-32 rounded-full flex items-center justify-center"
-                  style={{
-                    background: `conic-gradient(${(() => {
-                      const colorMap: Record<string, string> = {
-                        Zelle: 'var(--color-primary)',
-                        Efectivo: 'var(--color-tertiary)',
-                        'Pago Móvil': 'var(--color-on-surface)',
-                        Binance: 'var(--color-surface-container-highest)',
-                      };
-                      let acc = 0;
-                      return methodPercentages
-                        .map(({ method, percentage }) => {
-                          const start = acc;
-                          acc += percentage;
-                          return `${colorMap[method] ?? 'var(--color-outline-variant)'} ${start}% ${acc}%`;
-                        })
-                        .join(', ');
-                    })()})`,
-                  }}
-                >
-                  <div className="w-20 h-20 rounded-full bg-surface-container"></div>
+              <div className="flex-1 flex flex-col justify-center items-center py-4">
+                <div className="relative w-36 h-36">
+                  <svg width="144" height="144" viewBox="0 0 100 100" className="transform -rotate-90">
+                    <circle cx="50" cy="50" r="40" fill="none" stroke="var(--color-surface-container-low)" strokeWidth="14" />
+                    {(() => {
+                      const C = 2 * Math.PI * 40;
+                      let offset = 0;
+                      return methodPercentages.map(({ method, percentage }) => {
+                        const dash = (percentage / 100) * C;
+                        const circle = (
+                          <circle
+                            key={method}
+                            cx="50"
+                            cy="50"
+                            r="40"
+                            fill="none"
+                            stroke={METHOD_COLORS_HEX[method] || 'var(--color-outline-variant)'}
+                            strokeWidth="14"
+                            strokeDasharray={`${dash} ${C - dash}`}
+                            strokeDashoffset={-offset}
+                            className="cursor-pointer transition-opacity duration-300"
+                            style={{ opacity: hoveredMethod && hoveredMethod !== method ? 0.3 : 1 }}
+                            onMouseEnter={() => setHoveredMethod(method)}
+                            onMouseLeave={() => setHoveredMethod(null)}
+                          />
+                        );
+                        offset += dash;
+                        return circle;
+                      });
+                    })()}
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                    {hoveredMethod ? (
+                      <>
+                        <span className="text-primary font-headline-md text-headline-md">
+                          {methodPercentages.find(m => m.method === hoveredMethod)?.percentage}%
+                        </span>
+                        <span className="text-on-surface-variant text-[10px]">{hoveredMethod}</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-on-surface font-headline-md text-headline-md">{totalMethodCount}</span>
+                        <span className="text-on-surface-variant text-[10px]">Pagos</span>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
               <div className="mt-4 grid grid-cols-2 gap-y-2 gap-x-4 text-[11px] font-label-sm">
                 {methodPercentages.map(({ method, percentage }) => (
-                  <div key={method} className="flex items-center gap-2">
-                    <div className={`w-2.5 h-2.5 rounded-full ${METHOD_COLORS[method] ?? 'bg-outline-variant'}`}></div>
+                  <div 
+                    key={method} 
+                    className="flex items-center gap-2 cursor-pointer transition-opacity"
+                    style={{ opacity: hoveredMethod && hoveredMethod !== method ? 0.3 : 1 }}
+                    onMouseEnter={() => setHoveredMethod(method)}
+                    onMouseLeave={() => setHoveredMethod(null)}
+                  >
+                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: METHOD_COLORS_HEX[method] || 'var(--color-outline-variant)' }}></div>
                     <span className="text-on-surface-variant">{method} ({percentage}%)</span>
                   </div>
                 ))}

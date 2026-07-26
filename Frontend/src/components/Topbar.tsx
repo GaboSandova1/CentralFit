@@ -1,11 +1,6 @@
 import { useEffect, useState } from 'react';
 import { apiFetch } from '../lib/api';
 
-interface TopbarProps {
-  onMenuClick: () => void;
-  onOpenProfile: () => void;
-}
-
 interface Member {
   id: string;
   fullName: string;
@@ -13,16 +8,27 @@ interface Member {
   status: 'sin_plan' | 'activo' | 'por_vencer' | 'en_gracia' | 'vencido';
 }
 
-export default function Topbar({ onMenuClick, onOpenProfile }: TopbarProps) {
-  const [usdToBs, setUsdToBs] = useState<string | null>(null);
+interface TopbarProps {
+  onMenuClick: () => void;
+  onOpenProfile: () => void;
+  refreshTrigger?: number; // NUEVO
+}
+
+export default function Topbar({ onMenuClick, onOpenProfile, refreshTrigger }: TopbarProps) {
+  const [rateLabel, setRateLabel] = useState<string | null>(null);
   const [attentionList, setAttentionList] = useState<Member[]>([]);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
 
   useEffect(() => {
-    apiFetch('/exchange-rate')
-      .then((res) => res.json())
-      .then((data) => setUsdToBs(data.usdToBs))
-      .catch(() => setUsdToBs(null));
+    Promise.all([
+      apiFetch('/exchange-rate').then(res => res.json()),
+      apiFetch('/settings').then(res => res.json()).catch(() => ({ rateType: 'BCV' }))
+    ]).then(([rateData, settings]) => {
+      const isEuro = settings.rateType === 'Euro' && rateData.eurToBs;
+      const rateValue = isEuro ? Number(rateData.eurToBs) : Number(rateData.usdToBs);
+      const symbol = isEuro ? '€1' : '$1';
+      setRateLabel(`${symbol} = ${rateValue.toFixed(2)} Bs`);
+    }).catch(() => setRateLabel(null));
 
     apiFetch('/members')
       .then((res) => res.json())
@@ -30,7 +36,7 @@ export default function Topbar({ onMenuClick, onOpenProfile }: TopbarProps) {
         setAttentionList(members.filter((m) => ['por_vencer', 'vencido', 'en_gracia'].includes(m.status)));
       })
       .catch(() => setAttentionList([]));
-  }, []);
+  }, [refreshTrigger]); // <--- AÑADIDO refreshTrigger AQUÍ
 
   return (
     <header className="h-topbar-height fixed top-0 right-0 left-0 md:left-sidebar-width z-20 bg-surface dark:bg-surface border-b border-outline-variant dark:border-outline-variant flex justify-between items-center px-gutter w-full md:w-[calc(100%-var(--spacing-sidebar-width))]">
@@ -46,7 +52,7 @@ export default function Topbar({ onMenuClick, onOpenProfile }: TopbarProps) {
       <div className="flex items-center gap-4">
         <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-container-high border border-outline-variant text-on-surface-variant font-label-sm text-label-sm">
           <span className="material-symbols-outlined text-primary text-[16px]">payments</span>
-          {usdToBs ? `$1 = ${usdToBs} Bs` : 'Cargando tasa...'}
+          {rateLabel ? rateLabel : 'Cargando tasa...'}
         </div>
 
         {/* Notifications */}

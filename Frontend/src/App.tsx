@@ -18,16 +18,11 @@ function getInitialView(): ViewState {
 }
 
 export default function App() {
-
-  // const [currentView, setCurrentView] = useState<ViewState>('splash');
-
-  
-
-
   const [currentView, setCurrentView] = useState<ViewState>('splash');
 
   if (currentView === 'splash') {
-    return <Splash onComplete={() => setCurrentView('login')} />;
+    // Al terminar el splash, verificamos si hay sesión activa en vez de mandar al login siempre
+    return <Splash onComplete={() => setCurrentView(getInitialView())} />;
   }
 
   if (currentView === 'login') {

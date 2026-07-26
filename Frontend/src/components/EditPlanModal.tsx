@@ -10,6 +10,7 @@ interface EditPlanModalProps {
     name: string;
     durationDays: number;
     priceUsd: string;
+    priceUsdBs?: string | null;
     description: string | null;
   };
 }
@@ -18,6 +19,7 @@ export default function EditPlanModal({ isOpen, onClose, onSaved, plan }: EditPl
   const [name, setName] = useState('');
   const [durationDays, setDurationDays] = useState('');
   const [priceUsd, setPriceUsd] = useState('');
+  const [priceUsdBs, setPriceUsdBs] = useState('');
   const [description, setDescription] = useState('');
   const [rate, setRate] = useState<number | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -28,6 +30,7 @@ export default function EditPlanModal({ isOpen, onClose, onSaved, plan }: EditPl
       setName(plan.name);
       setDurationDays(String(plan.durationDays));
       setPriceUsd(plan.priceUsd);
+      setPriceUsdBs(plan.priceUsdBs ? String(plan.priceUsdBs) : '');
       setDescription(plan.description ?? '');
       setError(null);
     }
@@ -44,11 +47,12 @@ export default function EditPlanModal({ isOpen, onClose, onSaved, plan }: EditPl
   if (!isOpen) return null;
 
   const bsEstimate = priceUsd && rate ? (Number(priceUsd) * rate).toLocaleString('es-VE', { maximumFractionDigits: 2 }) : null;
+  const bsAltEstimate = priceUsdBs && rate ? (Number(priceUsdBs) * rate).toLocaleString('es-VE', { maximumFractionDigits: 2 }) : null;
 
   const handleSave = async () => {
     if (!plan) return;
     if (!name.trim() || !durationDays || !priceUsd) {
-      setError('Nombre, duración y precio son requeridos');
+      setError('Nombre, duración y precio principal son requeridos');
       return;
     }
 
@@ -62,6 +66,7 @@ export default function EditPlanModal({ isOpen, onClose, onSaved, plan }: EditPl
           name,
           durationDays: Number(durationDays),
           priceUsd: Number(priceUsd),
+          priceUsdBs: priceUsdBs ? Number(priceUsdBs) : null,
           description: description || undefined,
         }),
       });
@@ -82,19 +87,16 @@ export default function EditPlanModal({ isOpen, onClose, onSaved, plan }: EditPl
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-[8px] p-4">
-      {/* Modal Content */}
       <div className="bg-surface-container w-full max-w-lg rounded-xl border border-outline-variant shadow-2xl overflow-hidden animate-[fadeIn_0.3s_ease-out] flex flex-col max-h-[90vh]">
-        {/* Modal Header */}
         <div className="px-5 py-4 border-b bg-surface-container-high flex justify-between items-center border-outline-variant shrink-0">
           <h3 className="text-lg font-headline-md text-on-surface">Editar Plan</h3>
           <button onClick={onClose} className="text-on-surface-variant hover:text-white transition-colors cursor-pointer">
             <span className="material-symbols-outlined">close</span>
           </button>
         </div>
-        {/* Modal Body */}
         <div className="p-4 flex flex-col gap-4 overflow-y-auto flex-1">
           <div className="flex flex-col gap-1">
-            <p className="text-body-sm font-body-sm text-on-surface-variant">Modifica los parámetros de este plan. El precio se fija en USD; el equivalente en Bs se calcula solo.</p>
+            <p className="text-body-sm font-body-sm text-on-surface-variant">Modifica los parámetros de este plan. Puedes fijar un precio especial para pagos en Bolívares.</p>
           </div>
 
           {error && (
@@ -105,7 +107,6 @@ export default function EditPlanModal({ isOpen, onClose, onSaved, plan }: EditPl
           )}
 
           <form className="space-y-3" onSubmit={(e) => e.preventDefault()}>
-            {/* Name Field */}
             <div className="flex flex-col gap-2">
               <label className="text-label-md font-label-md text-on-surface">Nombre del Plan</label>
               <input
@@ -115,24 +116,23 @@ export default function EditPlanModal({ isOpen, onClose, onSaved, plan }: EditPl
                 onChange={(e) => setName(e.target.value)}
               />
             </div>
-            {/* Duration and Price Fields */}
-            <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
-              {/* Duration Field */}
-              <div className="flex flex-col gap-2">
-                <label className="text-label-md font-label-md text-on-surface">Duración (Días)</label>
-                <div className="flex items-center bg-surface-container-low border border-outline-variant rounded-lg px-3">
-                  <span className="material-symbols-outlined text-on-surface-variant text-sm mr-2">calendar_today</span>
-                  <input
-                    className="w-full bg-transparent border-none py-3 text-on-surface focus:ring-0 outline-none font-body-md text-body-md"
-                    type="number"
-                    value={durationDays}
-                    onChange={(e) => setDurationDays(e.target.value)}
-                  />
-                </div>
+            
+            <div className="flex flex-col gap-2">
+              <label className="text-label-md font-label-md text-on-surface">Duración (Días)</label>
+              <div className="flex items-center bg-surface-container-low border border-outline-variant rounded-lg px-3">
+                <span className="material-symbols-outlined text-on-surface-variant text-sm mr-2">calendar_today</span>
+                <input
+                  className="w-full bg-transparent border-none py-3 text-on-surface focus:ring-0 outline-none font-body-md text-body-md"
+                  type="number"
+                  value={durationDays}
+                  onChange={(e) => setDurationDays(e.target.value)}
+                />
               </div>
-              {/* Price Field (USD) */}
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="flex flex-col gap-2">
-                <label className="text-label-md font-label-md text-on-surface">Precio (USD)</label>
+                <label className="text-label-md font-label-md text-on-surface">Precio Efectivo/Zelle (USD)</label>
                 <div className="flex items-center bg-surface-container-low border border-outline-variant rounded-lg px-3">
                   <span className="text-on-surface-variant mr-1">$</span>
                   <input
@@ -146,7 +146,25 @@ export default function EditPlanModal({ isOpen, onClose, onSaved, plan }: EditPl
                   {bsEstimate ? `≈ Bs ${bsEstimate}` : 'Tasa no disponible'}
                 </p>
               </div>
+              
+              <div className="flex flex-col gap-2">
+                <label className="text-label-md font-label-md text-on-surface">Precio Pago Móvil (USD)</label>
+                <div className="flex items-center bg-surface-container-low border border-outline-variant rounded-lg px-3">
+                  <span className="text-on-surface-variant mr-1">$</span>
+                  <input
+                    className="w-full bg-transparent border-none py-3 text-on-surface focus:ring-0 outline-none font-body-md text-body-md"
+                    placeholder="Opcional"
+                    type="text"
+                    value={priceUsdBs}
+                    onChange={(e) => setPriceUsdBs(e.target.value)}
+                  />
+                </div>
+                <p className="text-[11px] text-on-surface-variant">
+                  {bsAltEstimate ? `≈ Bs ${bsAltEstimate}` : 'Se usará el base si está vacío'}
+                </p>
+              </div>
             </div>
+
             <div className="flex flex-col gap-2">
               <label className="text-label-md font-label-md text-on-surface">Descripción / Subtítulo</label>
               <textarea
@@ -158,7 +176,6 @@ export default function EditPlanModal({ isOpen, onClose, onSaved, plan }: EditPl
             </div>
           </form>
         </div>
-        {/* Modal Footer */}
         <div className="px-5 py-4 bg-surface-container-high border-t border-outline-variant flex justify-end gap-3 shrink-0">
           <button onClick={onClose} disabled={isSaving} className="px-4 py-2 rounded-lg text-label-md font-label-md text-on-surface hover:bg-surface-variant transition-colors border border-outline-variant cursor-pointer disabled:opacity-60">
             Cancelar

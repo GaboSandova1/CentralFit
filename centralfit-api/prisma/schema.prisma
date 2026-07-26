@@ -63,6 +63,7 @@ model Plan {
   name         String
   durationDays Int
   priceUsd     Decimal
+  priceUsdBs   Decimal?  // <--- NUEVO: Precio en USD paralelo para pagos en Bs
   description  String?
 
   subscriptions Subscription[]
@@ -111,4 +112,5 @@ model GymSettings {
   gymId     String @unique
   gym       Gym    @relation(fields: [gymId], references: [id])
   graceDays Int    @default(3)
+  rateType  String @default("BCV") // <--- NUEVO: BCV o Euro
 }

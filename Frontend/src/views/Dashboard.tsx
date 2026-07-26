@@ -333,7 +333,7 @@ export default function Dashboard() {
               </div>
             )}
 
-            <div className="flex flex-col gap-1.5 mb-2">
+                        <div className="flex flex-col gap-1.5 mb-2">
               <label className="font-label-sm text-label-sm text-on-surface-variant uppercase">Fotografía del Afiliado (Opcional)</label>
               <div className="flex items-center gap-3">
                 <input
@@ -343,6 +343,18 @@ export default function Dashboard() {
                   className="text-body-sm text-on-surface-variant/50 file:mr-4 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-body-sm file:font-semibold file:bg-surface-container-high file:text-on-surface-variant cursor-not-allowed"
                 />
               </div>
+            </div>
+
+            <div className="flex flex-col gap-1.5 mb-2">
+              <label className="font-label-sm text-label-sm text-on-surface-variant uppercase">Identificación Biométrica / QR (Próximamente)</label>
+              <button
+                type="button"
+                disabled
+                className="flex items-center justify-center gap-2 w-full bg-surface border border-dashed border-outline-variant rounded-md px-3 py-3 text-body-sm text-on-surface-variant/50 cursor-not-allowed hover:border-primary transition-colors"
+              >
+                <span className="material-symbols-outlined">fingerprint</span>
+                Escanear huella o QR
+              </button>
             </div>
 
             <button

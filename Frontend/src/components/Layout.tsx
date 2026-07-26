@@ -17,6 +17,9 @@ export default function Layout({ children, currentView, onViewChange }: LayoutPr
   const [renovationModalOpen, setRenovationModalOpen] = useState(false);
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
   const [userProfileModalOpen, setUserProfileModalOpen] = useState(false);
+  
+  // Estado para forzar la actualización del Topbar cuando cambian las configuraciones
+  const [refreshTopbar, setRefreshTopbar] = useState(0);
 
   return (
     <div className="bg-background text-on-background font-body-md text-body-md antialiased overflow-x-hidden min-h-screen">
@@ -28,7 +31,11 @@ export default function Layout({ children, currentView, onViewChange }: LayoutPr
         onOpenRenovation={() => setRenovationModalOpen(true)}
         onOpenSettings={() => setSettingsModalOpen(true)}
       />
-      <Topbar onMenuClick={() => setSidebarOpen(true)} onOpenProfile={() => setUserProfileModalOpen(true)} />
+      <Topbar 
+        onMenuClick={() => setSidebarOpen(true)} 
+        onOpenProfile={() => setUserProfileModalOpen(true)} 
+        refreshTrigger={refreshTopbar} 
+      />
       <main className="ml-0 md:ml-sidebar-width mt-topbar-height p-4 md:p-container-padding min-h-[calc(100vh-var(--spacing-topbar-height))]">
         <div className="max-w-6xl mx-auto">
           {children}
@@ -43,6 +50,7 @@ export default function Layout({ children, currentView, onViewChange }: LayoutPr
       <SettingsModal
         isOpen={settingsModalOpen}
         onClose={() => setSettingsModalOpen(false)}
+        onSettingsSaved={() => setRefreshTopbar(prev => prev + 1)} // <--- AQUÍ SE AVISA AL TOPBAR
       />
 
       <UserProfileModal
