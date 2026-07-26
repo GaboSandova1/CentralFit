@@ -4,17 +4,20 @@ import { apiFetch } from '../lib/api';
 interface Member {
   id: string;
   fullName: string;
+  cedula: string;
   plan: string | null;
+  endDate: string | null;
   status: 'sin_plan' | 'activo' | 'por_vencer' | 'en_gracia' | 'vencido';
 }
 
 interface TopbarProps {
   onMenuClick: () => void;
   onOpenProfile: () => void;
-  refreshTrigger?: number; // NUEVO
+  refreshTrigger?: number;
+  onNotificationClick: (member: Member) => void; // NUEVO
 }
 
-export default function Topbar({ onMenuClick, onOpenProfile, refreshTrigger }: TopbarProps) {
+export default function Topbar({ onMenuClick, onOpenProfile, refreshTrigger, onNotificationClick }: TopbarProps) {
   const [rateLabel, setRateLabel] = useState<string | null>(null);
   const [attentionList, setAttentionList] = useState<Member[]>([]);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
@@ -36,7 +39,12 @@ export default function Topbar({ onMenuClick, onOpenProfile, refreshTrigger }: T
         setAttentionList(members.filter((m) => ['por_vencer', 'vencido', 'en_gracia'].includes(m.status)));
       })
       .catch(() => setAttentionList([]));
-  }, [refreshTrigger]); // <--- AÑADIDO refreshTrigger AQUÍ
+  }, [refreshTrigger]);
+
+  const handleNotificationClick = (member: Member) => {
+    onNotificationClick(member);
+    setNotificationsOpen(false);
+  };
 
   return (
     <header className="h-topbar-height fixed top-0 right-0 left-0 md:left-sidebar-width z-20 bg-surface dark:bg-surface border-b border-outline-variant dark:border-outline-variant flex justify-between items-center px-gutter w-full md:w-[calc(100%-var(--spacing-sidebar-width))]">
@@ -83,15 +91,20 @@ export default function Topbar({ onMenuClick, onOpenProfile, refreshTrigger }: T
                     attentionList.map((m) => {
                       const isOverdue = m.status === 'vencido' || m.status === 'en_gracia';
                       return (
-                        <div key={m.id} className="px-4 py-2.5 border-b border-outline-variant/50 flex items-center gap-2">
+                        <button 
+                          key={m.id} 
+                          onClick={() => handleNotificationClick(m)}
+                          className="w-full px-4 py-2.5 border-b border-outline-variant/50 flex items-center gap-2 hover:bg-surface-container-high/50 transition-colors text-left cursor-pointer"
+                        >
                           <span className={`material-symbols-outlined text-[18px] ${isOverdue ? 'text-error' : 'text-tertiary'}`}>
                             {isOverdue ? 'error' : 'warning'}
                           </span>
-                          <div>
+                          <div className="flex-1">
                             <p className="text-body-sm text-on-surface">{m.fullName}</p>
                             <p className="text-[11px] text-on-surface-variant">{m.plan ?? 'Sin plan'} · {isOverdue ? 'Vencido' : 'Por vencer'}</p>
                           </div>
-                        </div>
+                          <span className="material-symbols-outlined text-on-surface-variant text-[16px]">chevron_right</span>
+                        </button>
                       );
                     })
                   )}

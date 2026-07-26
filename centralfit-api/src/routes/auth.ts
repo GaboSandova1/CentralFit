@@ -101,7 +101,30 @@ router.get('/me', requireAuth, async (req: AuthRequest, res) => {
     email: user.email,
     fullName: user.fullName,
     role: user.role,
+    photoUrl: user.photoUrl, // <--- AGREGADO PARA DEVOLVER LA FOTO
     gym: { id: user.gym.id, name: user.gym.name },
+  });
+});
+
+// NUEVA RUTA: Actualizar perfil (foto, nombre, etc.)
+router.patch('/me', requireAuth, async (req: AuthRequest, res) => {
+  if (!req.userId) return res.status(401).json({ error: 'No autorizado' });
+  
+  const { fullName, phone, cedula, photoUrl } = req.body;
+
+  const updatedUser = await prisma.user.update({
+    where: { id: req.userId },
+    data: { fullName, phone, cedula, photoUrl },
+    include: { gym: true }
+  });
+
+  res.json({
+    id: updatedUser.id,
+    email: updatedUser.email,
+    fullName: updatedUser.fullName,
+    role: updatedUser.role,
+    photoUrl: updatedUser.photoUrl,
+    gym: { id: updatedUser.gym.id, name: updatedUser.gym.name }
   });
 });
 
@@ -127,6 +150,5 @@ router.patch('/password', requireAuth, async (req: AuthRequest, res) => {
 
   res.json({ success: true });
 });
-
 
 export default router;

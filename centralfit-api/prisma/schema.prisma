@@ -37,6 +37,7 @@ model User {
   fullName     String?
   phone        String?
   cedula       String?
+  photoUrl     String?
 }
 
 model Member {

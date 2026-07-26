@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { apiFetch } from '../lib/api';
+import { apiFetch, uploadProfilePicture } from '../lib/api';
 
 interface EditMemberModalProps {
   isOpen: boolean;
@@ -11,6 +11,7 @@ interface EditMemberModalProps {
     fullName: string;
     cedula: string;
     phone: string;
+    photoUrl?: string | null;
   };
 }
 
@@ -18,7 +19,9 @@ export default function EditMemberModal({ isOpen, onClose, onOpenDelete, onSaved
   const [fullName, setFullName] = useState('');
   const [cedula, setCedula] = useState('');
   const [phone, setPhone] = useState('');
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -26,11 +29,27 @@ export default function EditMemberModal({ isOpen, onClose, onOpenDelete, onSaved
       setFullName(member.fullName);
       setCedula(member.cedula);
       setPhone(member.phone);
+      setPhotoUrl(member.photoUrl ?? null);
       setError(null);
     }
   }, [member]);
 
   if (!isOpen) return null;
+
+  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploading(true);
+    setError(null);
+    try {
+      const url = await uploadProfilePicture(file);
+      setPhotoUrl(url);
+    } catch {
+      setError('No se pudo subir la foto. Intenta de nuevo.');
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   const handleSave = async () => {
     if (!member) return;
@@ -40,7 +59,7 @@ export default function EditMemberModal({ isOpen, onClose, onOpenDelete, onSaved
     try {
       const response = await apiFetch(`/members/${member.dbId}`, {
         method: 'PATCH',
-        body: JSON.stringify({ fullName, cedula, phone }),
+        body: JSON.stringify({ fullName, cedula, phone, photoUrl }),
       });
 
       if (!response.ok) {
@@ -77,24 +96,37 @@ export default function EditMemberModal({ isOpen, onClose, onOpenDelete, onSaved
             </div>
           )}
           <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
-            {/* Profile Photo Section */}
+            {/* Profile Photo Section - ACTUALIZADO */}
             <div className="flex items-center gap-4 pb-6 border-b border-outline-variant">
-              <div className="relative group cursor-pointer">
+              <div className="relative group cursor-pointer w-20 h-20">
                 <div className="w-20 h-20 rounded-full border-2 border-outline-variant overflow-hidden bg-surface-container-high flex items-center justify-center relative">
-                  <img alt="Member portrait" className="w-full h-full object-cover" src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${fullName || 'Alejandro'}`} />
+                  {photoUrl ? (
+                    <img src={photoUrl} alt="Member portrait" className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="material-symbols-outlined text-on-surface-variant text-[32px]">person</span>
+                  )}
                   <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                    <span className="material-symbols-outlined text-white">add</span>
+                    {isUploading ? (
+                      <span className="material-symbols-outlined text-white animate-spin">sync</span>
+                    ) : (
+                      <span className="material-symbols-outlined text-white">photo_camera</span>
+                    )}
                   </div>
                 </div>
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  className="absolute inset-0 opacity-0 cursor-pointer" 
+                  onChange={handlePhotoChange} 
+                  disabled={isUploading}
+                />
               </div>
               <div>
                 <h4 className="font-label-md text-label-md text-on-surface mb-1">Foto de perfil</h4>
                 <p className="font-body-sm text-body-sm text-on-surface-variant mb-3">
-                  Sube una foto nítida para la identificación del miembro. Formato JPG o PNG, máximo 5 MB.
-                  <span className="block text-[11px] mt-1 opacity-70">(La subida de fotos aún no está conectada)</span>
+                  Haz clic en la cámara para subir o cambiar la foto. Formato JPG o PNG.
                 </p>
                 <div className="flex gap-3">
-                  <button disabled className="px-3 py-1.5 border border-outline-variant rounded-lg text-on-surface-variant/50 font-label-sm text-label-sm cursor-not-allowed" type="button">Cambiar foto</button>
                   <button onClick={onOpenDelete} className="px-3 py-1.5 text-error font-label-sm text-label-sm hover:bg-error/10 rounded-lg transition-colors cursor-pointer" type="button">Eliminar miembro</button>
                 </div>
               </div>

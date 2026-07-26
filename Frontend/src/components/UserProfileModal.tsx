@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { apiFetch } from '../lib/api';
+import { apiFetch, uploadProfilePicture } from '../lib/api';
 
 interface UserProfileModalProps {
   isOpen: boolean;
@@ -11,6 +11,7 @@ interface Profile {
   email: string;
   fullName: string | null;
   role: string;
+  photoUrl?: string | null;
   gym: { id: string; name: string };
 }
 
@@ -21,7 +22,9 @@ const ROLE_LABELS: Record<string, string> = {
 
 export default function UserProfileModal({ isOpen, onClose }: UserProfileModalProps) {
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [currentPassword, setCurrentPassword] = useState('');
@@ -40,7 +43,9 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
       try {
         const response = await apiFetch('/auth/me');
         if (!response.ok) throw new Error();
-        setProfile(await response.json());
+        const data = await response.json();
+        setProfile(data);
+        setPhotoUrl(data.photoUrl ?? null);
       } catch {
         setError('No se pudo cargar el perfil.');
       } finally {
@@ -57,6 +62,27 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
   }, [isOpen]);
 
   if (!isOpen) return null;
+
+  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploading(true);
+    setError(null);
+    try {
+      const url = await uploadProfilePicture(file);
+      setPhotoUrl(url);
+      // Guardar en backend inmediatamente
+      const response = await apiFetch('/auth/me', {
+        method: 'PATCH',
+        body: JSON.stringify({ photoUrl: url }),
+      });
+      if (!response.ok) throw new Error();
+    } catch {
+      setError('No se pudo subir la foto. Intenta de nuevo.');
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   const handleUpdatePassword = async () => {
     setPasswordError(null);
@@ -118,10 +144,28 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
 
           {/* Profile Image & Status */}
           <div className="flex flex-col items-center gap-4">
-            <div className="relative w-24 h-24">
-              <button disabled title="La subida de fotos aún no está conectada" className="w-full h-full rounded-full bg-primary/20 border-2 border-primary border-dashed flex items-center justify-center text-primary/50 cursor-not-allowed" aria-label="Upload photo">
-                <span className="material-symbols-outlined text-2xl">add_a_photo</span>
-              </button>
+            <div className="relative w-24 h-24 group cursor-pointer">
+              <div className="w-full h-full rounded-full border-2 border-primary overflow-hidden bg-surface-container-high flex items-center justify-center relative">
+                {photoUrl ? (
+                  <img src={photoUrl} alt="Profile" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="material-symbols-outlined text-on-surface-variant text-[32px]">person</span>
+                )}
+                <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  {isUploading ? (
+                    <span className="material-symbols-outlined text-white animate-spin">sync</span>
+                  ) : (
+                    <span className="material-symbols-outlined text-white">photo_camera</span>
+                  )}
+                </div>
+              </div>
+              <input 
+                type="file" 
+                accept="image/*" 
+                className="absolute inset-0 opacity-0 cursor-pointer" 
+                onChange={handlePhotoChange} 
+                disabled={isUploading}
+              />
             </div>
             <div className="text-center">
               <h3 className="font-headline-md text-lg text-on-surface">{isLoading ? 'Cargando...' : profile?.email}</h3>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import RenovationModal from '../components/RenovationModal';
-import { apiFetch } from '../lib/api';
+import { apiFetch, uploadProfilePicture } from '../lib/api';
 
 interface Member {
   id: string;
@@ -39,6 +39,7 @@ export default function Dashboard() {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formSuccess, setFormSuccess] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const [form, setForm] = useState({
     fullName: '',
@@ -48,6 +49,7 @@ export default function Dashboard() {
     startDate: new Date().toISOString().slice(0, 10),
     method: 'Efectivo',
     reference: '',
+    photoUrl: '', // NUEVO
   });
 
   const loadData = async () => {
@@ -90,6 +92,22 @@ export default function Dashboard() {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
+  // NUEVO: Manejar subida de imagen
+  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploading(true);
+    setError(null);
+    try {
+      const url = await uploadProfilePicture(file);
+      setForm((prev) => ({ ...prev, photoUrl: url }));
+    } catch {
+      setError('No se pudo subir la foto. Intenta de nuevo.');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const validateForm = (): string | null => {
     if (!form.fullName.trim()) return 'El nombre completo es requerido';
     if (!/^\d{7,8}$/.test(form.cedula)) return 'La cédula debe tener entre 7 y 8 números';
@@ -120,6 +138,7 @@ export default function Dashboard() {
           fullName: form.fullName,
           cedula: form.cedula,
           phone: form.phone || undefined,
+          photoUrl: form.photoUrl || undefined, // NUEVO
           planId: form.planId || undefined,
           startDate: form.startDate,
           method: form.planId ? form.method : undefined,
@@ -144,6 +163,7 @@ export default function Dashboard() {
         startDate: new Date().toISOString().slice(0, 10),
         method: 'Efectivo',
         reference: '',
+        photoUrl: '', // Limpiar foto
       });
       loadData();
     } catch {
@@ -333,15 +353,27 @@ export default function Dashboard() {
               </div>
             )}
 
-                        <div className="flex flex-col gap-1.5 mb-2">
+            {/* NUEVO: Input de Foto Funcional */}
+            <div className="flex flex-col gap-1.5 mb-2">
               <label className="font-label-sm text-label-sm text-on-surface-variant uppercase">Fotografía del Afiliado (Opcional)</label>
               <div className="flex items-center gap-3">
+                {form.photoUrl ? (
+                  <div className="relative w-12 h-12 rounded-full overflow-hidden border border-outline-variant">
+                    <img src={form.photoUrl} alt="Preview" className="w-full h-full object-cover" />
+                  </div>
+                ) : (
+                  <div className="w-12 h-12 rounded-full bg-surface-container-high border border-outline-variant flex items-center justify-center">
+                    <span className="material-symbols-outlined text-on-surface-variant text-[20px]">person</span>
+                  </div>
+                )}
                 <input
                   type="file"
-                  disabled
-                  title="La subida de fotos aún no está conectada"
-                  className="text-body-sm text-on-surface-variant/50 file:mr-4 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-body-sm file:font-semibold file:bg-surface-container-high file:text-on-surface-variant cursor-not-allowed"
+                  accept="image/*"
+                  disabled={isUploading}
+                  onChange={handlePhotoChange}
+                  className="text-body-sm text-on-surface-variant file:mr-4 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-body-sm file:font-semibold file:bg-surface-container-high file:text-on-surface-variant cursor-pointer disabled:opacity-60"
                 />
+                {isUploading && <span className="material-symbols-outlined animate-spin text-primary text-[18px]">sync</span>}
               </div>
             </div>
 
@@ -359,7 +391,7 @@ export default function Dashboard() {
 
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || isUploading}
               className="w-full bg-primary hover:bg-primary-fixed text-on-primary font-label-md text-label-md py-2 rounded-lg transition-colors flex items-center justify-center gap-2 mt-1 cursor-pointer shadow-[0_4px_12px_rgba(81,224,132,0.15)] disabled:opacity-60"
             >
               {isSubmitting ? 'Registrando...' : 'Registrar Miembro'}
@@ -405,7 +437,11 @@ export default function Dashboard() {
                         <td className="p-3">
                           <div className="flex items-center gap-3">
                             <div className="w-9 h-9 rounded-full bg-surface-container-highest border border-outline-variant flex items-center justify-center text-on-surface-variant font-label-md font-semibold overflow-hidden">
-                              {member.fullName.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase()}
+                              {member.photoUrl ? (
+                                <img src={member.photoUrl} alt={member.fullName} className="w-full h-full object-cover" />
+                              ) : (
+                                member.fullName.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase()
+                              )}
                             </div>
                             <div>
                               <p className="font-body-sm text-on-surface font-medium">{member.fullName}</p>
@@ -424,7 +460,6 @@ export default function Dashboard() {
                         <td className="p-3">
                           <button
                             onClick={() => {
-                              // "Recordar" todavía no hace nada — se conectará más adelante (ej. WhatsApp/SMS)
                               if (!isOverdue) return;
                               setSelectedMember(member);
                               setRenovationModalOpen(true);

@@ -291,7 +291,13 @@ export default function Members() {
           setDeleteModalOpen(true);
         }}
         onSaved={loadMembers}
-        member={selectedMember ? { dbId: selectedMember.id, fullName: selectedMember.fullName, cedula: selectedMember.cedula, phone: selectedMember.phone ?? '' } : undefined}
+        member={selectedMember ? { 
+          dbId: selectedMember.id, 
+          fullName: selectedMember.fullName, 
+          cedula: selectedMember.cedula, 
+          phone: selectedMember.phone ?? '', 
+          photoUrl: selectedMember.photoUrl // <--- AGREGAR ESTO
+        } : undefined}
       />
 
       <RenovationModal
