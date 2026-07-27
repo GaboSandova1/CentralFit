@@ -1,0 +1,117 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model SuperAdmin {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+}
+
+model Gym {
+  id        String   @id @default(uuid())
+  name      String
+  address   String?
+  phone     String?
+  status    String   @default("active")
+  createdAt DateTime @default(now())
+
+  users    User[]
+  members  Member[]
+  plans    Plan[]
+  settings GymSettings?
+}
+
+model User {
+  id           String  @id @default(uuid())
+  gymId        String
+  gym          Gym     @relation(fields: [gymId], references: [id])
+  email        String  @unique
+  passwordHash String
+  role         String  @default("receptionist")
+  fullName     String?
+  phone        String?
+  cedula       String?
+  photoUrl     String?
+}
+
+model Member {
+  id        String   @id @default(uuid())
+  gymId     String
+  gym       Gym      @relation(fields: [gymId], references: [id])
+  fullName  String
+  cedula    String
+  phone     String?
+  photoUrl  String?
+  createdAt DateTime @default(now())
+
+  subscriptions Subscription[]
+
+  @@unique([gymId, cedula])
+  @@index([gymId])
+  @@index([cedula])
+}
+
+model Plan {
+  id           String   @id @default(uuid())
+  gymId        String
+  gym          Gym      @relation(fields: [gymId], references: [id])
+  name         String
+  durationDays Int
+  priceUsd     Decimal
+  priceUsdBs   Decimal?  // <--- NUEVO: Precio en USD paralelo para pagos en Bs
+  description  String?
+
+  subscriptions Subscription[]
+
+  @@index([gymId])
+}
+
+model Subscription {
+  id        String   @id @default(uuid())
+  memberId  String
+  member    Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  planId    String
+  plan      Plan     @relation(fields: [planId], references: [id])
+  startDate DateTime
+  endDate   DateTime
+
+  transactions Transaction[]
+
+  @@index([endDate])
+  @@index([memberId])
+}
+
+model Transaction {
+  id               String       @id @default(uuid())
+  subscriptionId   String
+  subscription     Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  amountUsd        Decimal?
+  amountBs         Decimal?
+  exchangeRateUsed Decimal?
+  method           String
+  reference        String?
+  createdAt        DateTime     @default(now())
+
+  @@index([subscriptionId])
+}
+
+model ExchangeRate {
+  id        String   @id @default(uuid())
+  usdToBs   Decimal
+  eurToBs   Decimal?
+  fetchedAt DateTime @default(now())
+}
+
+model GymSettings {
+  id        String @id @default(uuid())
+  gymId     String @unique
+  gym       Gym    @relation(fields: [gymId], references: [id])
+  graceDays Int    @default(3)
+  rateType  String @default("BCV") // <--- NUEVO: BCV o Euro
+}
