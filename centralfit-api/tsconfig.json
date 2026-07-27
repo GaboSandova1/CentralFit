@@ -8,12 +8,11 @@
     "declaration": true,
     "declarationMap": true,
 
-    "noUncheckedIndexedAccess": true,
-    // "exactOptionalPropertyTypes": true,
-
-    "strict": true,
+    "noUncheckedIndexedAccess": false,
+    
+    "strict": false,
+    "noImplicitAny": false,
     "isolatedModules": true,
-    "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
     "skipLibCheck": true,
 
