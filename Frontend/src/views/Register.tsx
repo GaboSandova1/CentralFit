@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import TermsAndConditionsModal from '../components/TermsAndConditionsModal'; // Importamos el componente
 
 interface RegisterProps {
   onRegisterComplete: (token: string) => void;
@@ -27,6 +28,7 @@ export default function Register({ onRegisterComplete, onClose }: RegisterProps)
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
   const totalSteps = 3;
 
   const [formData, setFormData] = useState<FormData>({
@@ -46,7 +48,6 @@ export default function Register({ onRegisterComplete, onClose }: RegisterProps)
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  // Para cédula y teléfonos: filtra cualquier caracter que no sea número mientras se escribe
   const updateDigitsOnly = (field: keyof FormData, value: string, maxLength: number) => {
     const digitsOnly = value.replace(/\D/g, '').slice(0, maxLength);
     updateField(field, digitsOnly);
@@ -131,7 +132,6 @@ export default function Register({ onRegisterComplete, onClose }: RegisterProps)
       return;
     }
 
-    // Último paso: enviar al backend
     setIsSubmitting(true);
     try {
       const response = await fetch(`${API_URL}/auth/register`, {
@@ -419,7 +419,7 @@ export default function Register({ onRegisterComplete, onClose }: RegisterProps)
                         </span>
                       </div>
                       <span className="text-sm text-on-surface-variant group-hover:text-on-surface transition-colors select-none">
-                        Acepto los <a className="text-primary hover:underline relative z-10" href="#">Términos y Condiciones</a>
+                        Acepto los <button type="button" onClick={() => setShowTermsModal(true)} className="text-primary hover:underline relative z-10 cursor-pointer">Términos y Condiciones</button>
                       </span>
                     </label>
                   </div>
@@ -464,6 +464,12 @@ export default function Register({ onRegisterComplete, onClose }: RegisterProps)
           </p>
         </div>
       </main>
+
+      {/* MODAL DE TÉRMINOS Y CONDICIONES (Importado) */}
+      <TermsAndConditionsModal 
+        isOpen={showTermsModal} 
+        onClose={() => setShowTermsModal(false)} 
+      />
     </div>
   );
 }

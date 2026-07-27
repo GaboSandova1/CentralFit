@@ -14,23 +14,27 @@ interface TopbarProps {
   onMenuClick: () => void;
   onOpenProfile: () => void;
   refreshTrigger?: number;
-  onNotificationClick: (member: Member) => void; // NUEVO
+  onNotificationClick: (member: Member) => void;
 }
 
 export default function Topbar({ onMenuClick, onOpenProfile, refreshTrigger, onNotificationClick }: TopbarProps) {
   const [rateLabel, setRateLabel] = useState<string | null>(null);
   const [attentionList, setAttentionList] = useState<Member[]>([]);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [profilePic, setProfilePic] = useState<string | null>(null);
 
   useEffect(() => {
     Promise.all([
       apiFetch('/exchange-rate').then(res => res.json()),
-      apiFetch('/settings').then(res => res.json()).catch(() => ({ rateType: 'BCV' }))
-    ]).then(([rateData, settings]) => {
+      apiFetch('/settings').then(res => res.json()).catch(() => ({ rateType: 'BCV' })),
+      apiFetch('/auth/me').then(res => res.json()).catch(() => null)
+    ]).then(([rateData, settings, userData]) => {
       const isEuro = settings.rateType === 'Euro' && rateData.eurToBs;
       const rateValue = isEuro ? Number(rateData.eurToBs) : Number(rateData.usdToBs);
       const symbol = isEuro ? '€1' : '$1';
       setRateLabel(`${symbol} = ${rateValue.toFixed(2)} Bs`);
+      
+      if (userData?.photoUrl) setProfilePic(userData.photoUrl);
     }).catch(() => setRateLabel(null));
 
     apiFetch('/members')
@@ -128,8 +132,8 @@ export default function Topbar({ onMenuClick, onOpenProfile, refreshTrigger, onN
         <button onClick={onOpenProfile} className="flex items-center gap-2 text-on-surface hover:text-primary transition-colors cursor-pointer">
           <img
             alt="Manager Profile"
-            className="w-8 h-8 rounded-full object-cover border border-outline-variant"
-            src="https://lh3.googleusercontent.com/aida-public/AB6AXuAnpkkTUiXDAunU1ft8A4rQaYG3K3iakxbnNap_gmrZ1TI5vznT60okq3RCcCUO9Ok7M7-DbWoW3xWzpbQ9w1374FhNt6jSZ8uJEhwdxI9kMFfTrJDjre--oJhqexTh7KlKKfpqGPGa_9L8b4ue-3gmXhJZbUrSWr5qAmKLMfGTNomERMFVwPwoyFzHcJ80IBRfMYmtNI3H2c806CLKqm8lLTBuDk_WssFaDNREyeipjeRmOtslFa24-KgNhK6I2KRpJc49j1ull7Q"
+            className="w-8 h-8 rounded-full object-cover border border-outline-variant bg-surface-container-high"
+            src={profilePic || "https://lh3.googleusercontent.com/aida-public/AB6AXuAnpkkTUiXDAunU1ft8A4rQaYG3K3iakxbnNap_gmrZ1TI5vznT60okq3RCcCUO9Ok7M7-DbWoW3xWzpbQ9w1374FhNt6jSZ8uJEhwdxI9kMFfTrJDjre--oJhqexTh7KlKKfpqGPGa_9L8b4ue-3gmXhJZbUrSWr5qAmKLMfGTNomERMFVwPwoyFzHcJ80IBRfMYmtNI3H2c806CLKqm8lLTBuDk_WssFaDNREyeipjeRmOtslFa24-KgNhK6I2KRpJc49j1ull7Q"}
           />
         </button>
       </div>

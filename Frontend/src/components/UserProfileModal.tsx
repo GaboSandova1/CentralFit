@@ -4,6 +4,7 @@ import { apiFetch, uploadProfilePicture } from '../lib/api';
 interface UserProfileModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onProfileUpdated?: () => void; // <--- AÑADIR
 }
 
 interface Profile {
@@ -20,7 +21,7 @@ const ROLE_LABELS: Record<string, string> = {
   receptionist: 'Recepcionista',
 };
 
-export default function UserProfileModal({ isOpen, onClose }: UserProfileModalProps) {
+export default function UserProfileModal({ isOpen, onClose, onProfileUpdated }: UserProfileModalProps) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -77,6 +78,7 @@ export default function UserProfileModal({ isOpen, onClose }: UserProfileModalPr
         body: JSON.stringify({ photoUrl: url }),
       });
       if (!response.ok) throw new Error();
+      onProfileUpdated?.(); 
     } catch {
       setError('No se pudo subir la foto. Intenta de nuevo.');
     } finally {

@@ -70,6 +70,7 @@ export default function Layout({ children, currentView, onViewChange }: LayoutPr
       <UserProfileModal
         isOpen={userProfileModalOpen}
         onClose={() => setUserProfileModalOpen(false)}
+        onProfileUpdated={() => setRefreshTopbar(prev => prev + 1)} // <--- AÑADIR ESTO
       />
     </div>
   );
