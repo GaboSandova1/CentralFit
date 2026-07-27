@@ -12,6 +12,7 @@
     
     "strict": false,
     "noImplicitAny": false,
+    "noEmitOnError": false, // <--- ¡AGREGA ESTA LÍNEA AQUÍ!
     "isolatedModules": true,
     "moduleDetection": "force",
     "skipLibCheck": true,
