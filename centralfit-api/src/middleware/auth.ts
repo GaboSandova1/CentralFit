@@ -2,10 +2,7 @@ import type { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { prisma } from '../prisma';
 
-export interface AuthRequest extends Request {
-  gymId?: string;
-  userId?: string;
-}
+export type AuthRequest = Request;
 
 export async function requireAuth(req: AuthRequest, res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization;

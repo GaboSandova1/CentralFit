@@ -1,9 +1,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 
-export interface SuperAdminRequest extends Request {
-  adminId?: string;
-}
+export type SuperAdminRequest = Request;
 
 export function requireSuperAdmin(req: SuperAdminRequest, res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization;
