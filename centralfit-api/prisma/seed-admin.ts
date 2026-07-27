@@ -9,16 +9,25 @@ const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  const email = 'sandovalgabo24@gmail.com'; // 👈 cambia esto por tu correo real
-  const password = 'Money99'; // 👈 y esto también
+  // Leemos las credenciales desde el archivo .env
+  const email = process.env.SUPER_ADMIN_EMAIL;
+  const password = process.env.SUPER_ADMIN_PASSWORD;
+
+  if (!email || !password) {
+    console.error('❌ Debes definir SUPER_ADMIN_EMAIL y SUPER_ADMIN_PASSWORD en tu archivo .env');
+    return;
+  }
 
   const passwordHash = await bcrypt.hash(password, 10);
 
-  const admin = await prisma.superAdmin.create({
-    data: { email, passwordHash },
+  // Usamos upsert: si ya existe, no hace nada; si no existe, lo crea.
+  const admin = await prisma.superAdmin.upsert({
+    where: { email },
+    update: {}, // No actualizamos nada si ya existe
+    create: { email, passwordHash },
   });
 
-  console.log('✅ SuperAdmin creado:', admin.email);
+  console.log('✅ SuperAdmin creado/verificado:', admin.email);
 }
 
 main()
