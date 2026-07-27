@@ -2,7 +2,6 @@ import { createClient } from '@supabase/supabase-js';
 
 export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
-// Configuración de Supabase
 export const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL,
   import.meta.env.VITE_SUPABASE_ANON_KEY
@@ -31,10 +30,15 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
     window.location.reload();
   }
 
+  // NUEVO: Si fue una petición de creación, edición o borrado exitosa, avisamos a la app
+  const method = (options.method || 'GET').toUpperCase();
+  if (response.ok && ['POST', 'PATCH', 'PUT', 'DELETE'].includes(method)) {
+    window.dispatchEvent(new Event('centralFitDataChanged'));
+  }
+
   return response;
 }
 
-// Helper para subir imágenes a Supabase Storage
 export async function uploadProfilePicture(file: File): Promise<string> {
   const fileExt = file.name.split('.').pop();
   const fileName = `${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
@@ -46,10 +50,12 @@ export async function uploadProfilePicture(file: File): Promise<string> {
 
   if (error) throw new Error('Error al subir la imagen');
 
-  // Obtener URL pública
   const { data } = supabase.storage
     .from('profile-pictures')
     .getPublicUrl(filePath);
+
+  // NUEVO: Avisamos también que la foto subió
+  window.dispatchEvent(new Event('centralFitDataChanged'));
 
   return data.publicUrl;
 }

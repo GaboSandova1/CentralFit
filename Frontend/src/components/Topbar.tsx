@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { apiFetch } from '../lib/api';
 
 interface Member {
@@ -23,7 +23,7 @@ export default function Topbar({ onMenuClick, onOpenProfile, refreshTrigger, onN
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [profilePic, setProfilePic] = useState<string | null>(null);
 
-  useEffect(() => {
+  const fetchTopbarData = useCallback(() => {
     Promise.all([
       apiFetch('/exchange-rate').then(res => res.json()),
       apiFetch('/settings').then(res => res.json()).catch(() => ({ rateType: 'BCV' })),
@@ -43,7 +43,18 @@ export default function Topbar({ onMenuClick, onOpenProfile, refreshTrigger, onN
         setAttentionList(members.filter((m) => ['por_vencer', 'vencido', 'en_gracia'].includes(m.status)));
       })
       .catch(() => setAttentionList([]));
-  }, [refreshTrigger]);
+  }, []);
+
+  useEffect(() => {
+    fetchTopbarData();
+  }, [refreshTrigger, fetchTopbarData]);
+
+  // NUEVO: Escuchar el evento global de cambios en la base de datos
+  useEffect(() => {
+    const handleDataChange = () => fetchTopbarData();
+    window.addEventListener('centralFitDataChanged', handleDataChange);
+    return () => window.removeEventListener('centralFitDataChanged', handleDataChange);
+  }, [fetchTopbarData]);
 
   const handleNotificationClick = (member: Member) => {
     onNotificationClick(member);
@@ -105,7 +116,9 @@ export default function Topbar({ onMenuClick, onOpenProfile, refreshTrigger, onN
                           </span>
                           <div className="flex-1">
                             <p className="text-body-sm text-on-surface">{m.fullName}</p>
-                            <p className="text-[11px] text-on-surface-variant">{m.plan ?? 'Sin plan'} · {isOverdue ? 'Vencido' : 'Por vencer'}</p>
+                            <p className="text-[11px] text-on-surface-variant">
+                              {m.plan ?? 'Sin plan'} · {m.status === 'vencido' ? 'Vencido' : m.status === 'en_gracia' ? 'En Gracia' : 'Por vencer'}
+                            </p>
                           </div>
                           <span className="material-symbols-outlined text-on-surface-variant text-[16px]">chevron_right</span>
                         </button>

@@ -452,9 +452,9 @@ export default function Dashboard() {
                         <td className="p-3 font-body-sm text-on-surface-variant text-[14px]">{member.plan ?? 'Sin plan'}</td>
                         <td className="p-3">
                           <span className={`inline-flex items-center px-2 py-1 rounded text-[12px] font-semibold border ${
-                            isOverdue ? 'bg-error/10 text-error border-error/20' : 'bg-tertiary/10 text-tertiary border-tertiary/20'
+                            member.status === 'vencido' ? 'bg-error/10 text-error border-error/20' : 'bg-tertiary/10 text-tertiary border-tertiary/20'
                           }`}>
-                            {isOverdue ? 'Vencido' : daysUntil(member.endDate)}
+                            {member.status === 'vencido' ? 'Vencido' : member.status === 'en_gracia' ? 'En Gracia' : daysUntil(member.endDate)}
                           </span>
                         </td>
                         <td className="p-3">

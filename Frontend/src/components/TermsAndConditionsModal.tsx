@@ -37,17 +37,19 @@ El Administrador de la cuenta es el único responsable de la gestión, asignaci�
 3. SUSCRIPCIONES, PAGOS Y POLÍTICA DE CANCELACIÓN
 ========================================================================
 3.1 Período de Prueba Gratuito
-CentralFit ofrece a los nuevos Administradores un período de prueba gratuito de un (1) mes contados a partir del registro inicial. Durante este lapso, el Usuario podrá evaluar todas las funcionalidades de la Plataforma sin costo alguno.
+CentralFit ofrece a los nuevos Administradores un período de prueba gratuita de quince (15) días continuos, contados a partir del registro inicial. El control y monitoreo de este período de prueba será gestionado de forma manual y administrativa por el equipo de CentralFit. Durante este lapso, el Usuario podrá evaluar todas las funcionalidades de la Plataforma sin costo alguno.
 
 3.2 Modelo de Suscripción y Facturación
-Concluido el mes de prueba, el mantenimiento del acceso a la Plataforma requerirá la contratación de una suscripción mensual.
+Concluido los 15 días de prueba, el mantenimiento del acceso a la Plataforma requerirá la contratación de una suscripción mensual.
 - Métodos de Pago Aceptados: Transferencia Bancaria Nacional y Pago Móvil.
 - Confirmación de Pago: Los pagos deberán ser reportados y validados a través de los canales de soporte indicados por CentralFit para mantener activa la cuenta.
+- Tiempo de Procesamiento: El proceso de validación y activación manual de la cuenta podrá demorar hasta veinticuatro (24) horas hábiles bancarias tras el reporte del pago por parte del Administrador. Es responsabilidad del Administrador reportar el pago con anticipación para evitar la interrupción del servicio.
 
 3.3 Cancelación y Suspensión del Servicio
-- Cancelación Voluntaria: El Usuario puede solicitar la cancelación de su suscripción en cualquier momento antes de la fecha de su siguiente corte.
-- Efecto Inmediato: Al formalizarse la cancelación o al detectarse el impago de la mensualidad, el acceso a la Plataforma y a sus herramientas de gestión será revocado de manera inmediata.
-- Sin Reembolsos: No se realizarán reembolsos ni prorrateos por periodos parciales no utilizados tras la cancelación.
+- Cancelación Voluntaria: El Usuario puede solicitar la cancelación de su suscripción en cualquier momento antes de su fecha de corte.
+- Suspensión por Impago: Al no recibirse ni validarse el pago de la mensualidad en la fecha de vencimiento acordada, el Super Administrador de CentralFit se reserva el derecho de revocar manualmente el acceso a la Plataforma. No existen períodos de gracia automáticos para la suscripción del gimnasio, por lo que el Usuario debe gestionar y reportar su pago con anticipación para evitar interrupciones del servicio.
+- Resguardo y Eliminación de Datos: Durante el período de bloqueo por impago, los datos registrados por el gimnasio permanecerán guardados de forma segura en nuestros servidores. CentralFit se reserva el derecho de eliminar permanentemente la cuenta y toda su base de datos si se demuestra abandono del servicio o impago prolongado, siendo esta acción de purga realizada de forma manual por nuestro equipo administrativo.
+- Sin Reembolsos: No se realizarán reembolsos ni prorrateos por periodos parciales no utilizados tras la cancelación o suspensión.
 
 ========================================================================
 4. FUNCIONALIDADES Y MANEJO DE DATOS
@@ -77,6 +79,7 @@ CentralFit procurará mantener la máxima disponibilidad del servicio y se compr
 
 5.2 Exclusión de Garantías
 La Plataforma se proporciona "tal cual" y "según disponibilidad". CentralFit no garantiza un servicio 100% ininterrumpido debido a posibles fallas en infraestructura de internet, cortes eléctricos o eventos de fuerza mayor ajenos al control de la Plataforma.
+CentralFit no se hace responsable por pérdidas económicas, reclamos de clientes finales del gimnasio o inconvenientes operativos derivados de la imposibilidad de acceder a la Plataforma debido a fallas eléctricas nacionales, caídas del servicio de internet (Aba Cantv, Fibra Óptica, datos móviles).
 
 ========================================================================
 6. PROPIEDAD INTELECTUAL Y USOS PROHIBIDOS
@@ -100,31 +103,50 @@ CentralFit se reserva el derecho de modificar o actualizar los presentes Términ
 ========================================================================
 8. LEY APLICABLE Y JURISDICCIÓN
 ========================================================================
-Para la interpretación y cumplimiento de estos Términos y Condiciones, las partes se someten expresamente a la legislación vigente de la República Bolivariana de Venezuela y a los tribunales competentes en el territorio nacional.`;
+Para la interpretación y cumplimiento de estos Términos y Condiciones, las partes se someten expresamente a la legislación vigente de la República Bolivariana de Venezuela y a la jurisdicción de los Tribunales de la Circunscripción Judicial del Estado Aragua.`;
 
 export default function TermsAndConditionsModal({ isOpen, onClose }: TermsAndConditionsModalProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-surface-container rounded-xl border border-outline-variant w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl">
-        <div className="flex justify-between items-center p-4 border-b border-outline-variant bg-surface-container-high">
-          <h2 className="font-headline-md text-lg text-on-surface">Términos y Condiciones de Uso</h2>
-          <button onClick={onClose} className="text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer">
-            <span className="material-symbols-outlined">close</span>
+    <div className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
+      <div className="bg-surface-container rounded-2xl border border-outline-variant/50 w-full max-w-3xl max-h-[85vh] flex flex-col shadow-[0_8px_32px_rgba(0,0,0,0.6)] animate-[fadeIn_0.2s_ease-out]">
+        
+        {/* Modal Header */}
+        <div className="flex justify-between items-center px-6 py-5 border-b border-outline-variant/50 bg-surface-container-low shrink-0 rounded-t-2xl">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+              <span className="material-symbols-outlined text-primary text-[22px]">gavel</span>
+            </div>
+            <div>
+              <h2 className="font-headline-md text-xl text-on-surface font-semibold leading-tight">Términos y Condiciones</h2>
+              <p className="font-body-sm text-[13px] text-on-surface-variant mt-0.5">Reglamentos y normativas de la plataforma</p>
+            </div>
+          </div>
+          <button 
+            onClick={onClose} 
+            aria-label="Close modal" 
+            className="w-8 h-8 flex items-center justify-center rounded-full text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors focus:outline-none cursor-pointer"
+          >
+            <span className="material-symbols-outlined text-[20px]">close</span>
           </button>
         </div>
-        <div className="p-6 overflow-y-auto">
-          <pre className="whitespace-pre-wrap font-body-sm text-on-surface-variant text-sm leading-relaxed">
+
+        {/* Modal Body */}
+        <div className="p-6 md:p-8 overflow-y-auto flex-1 custom-scrollbar bg-surface-container-lowest">
+          <pre className="whitespace-pre-wrap font-body-md text-on-surface-variant text-[14px] leading-relaxed font-sans">
             {TERMS_TEXT}
           </pre>
         </div>
-        <div className="p-4 border-t border-outline-variant bg-surface-container-high flex justify-end">
+
+        {/* Modal Footer */}
+        <div className="px-6 py-4 border-t border-outline-variant/50 bg-surface-container-low flex justify-end shrink-0 rounded-b-2xl">
           <button 
             onClick={onClose} 
-            className="px-5 py-2 bg-primary text-on-primary rounded-lg font-label-md hover:bg-primary-fixed transition-colors cursor-pointer"
+            className="px-6 py-2.5 bg-primary text-on-primary rounded-lg font-label-md text-[14px] hover:bg-primary-fixed hover:-translate-y-0.5 transition-all shadow-md shadow-primary/10 cursor-pointer flex items-center gap-2"
           >
-            Cerrar
+            <span className="material-symbols-outlined text-[18px]">check</span>
+            Entendido
           </button>
         </div>
       </div>

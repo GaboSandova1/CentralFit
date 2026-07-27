@@ -164,8 +164,10 @@ export default function Login({ onLogin, onNavigateToRegister, onLoginSuperAdmin
               </span>
             </label>
             <a
-              className="font-label-sm text-label-sm text-primary hover:text-primary-fixed transition-colors focus:outline-none focus:underline underline-offset-4 decoration-primary/50"
-              href="#"
+              className="font-label-sm text-label-sm text-primary hover:text-primary-fixed transition-colors focus:outline-none focus:underline underline-offset-4 decoration-primary/50 cursor-pointer"
+              href="https://wa.me/584243811068?text=Hola,%20olvidé%20mi%20contraseña%20de%20CentralFit.%20Mi%20correo%20registrado%20es:%20"
+              target="_blank"
+              rel="noopener noreferrer"
             >
               ¿Olvidaste tu contraseña?
             </a>
