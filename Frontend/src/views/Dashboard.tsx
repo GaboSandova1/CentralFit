@@ -110,11 +110,15 @@ export default function Dashboard() {
   };
 
   // NUEVA VALIDACIÓN
-  const validateForm = (): Record<string, string> => {
+    const validateForm = (): Record<string, string> => {
     const errors: Record<string, string> = {};
     if (!form.fullName.trim()) errors.fullName = 'El nombre es requerido';
     if (!/^\d{7,8}$/.test(form.cedula)) errors.cedula = 'Cédula inválida (7-8 números)';
-    if (form.phone && !/^\d{11}$/.test(form.phone)) errors.phone = 'Debe tener 11 números';
+    
+    // AQUÍ ESTÁ EL CAMBIO: Ahora validamos que exista y tenga 11 números
+    if (!form.phone.trim()) errors.phone = 'El teléfono es requerido';
+    else if (!/^\d{11}$/.test(form.phone)) errors.phone = 'Debe tener 11 números';
+
     if (form.planId && !form.method) errors.method = 'Selecciona un método';
     if (form.planId && form.method !== 'Efectivo' && !form.reference.trim()) {
       errors.reference = 'La referencia es requerida';
