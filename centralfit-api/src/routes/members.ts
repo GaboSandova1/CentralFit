@@ -38,7 +38,7 @@ router.get('/', async (req: AuthRequest, res) => {
     orderBy: { createdAt: 'desc' },
   });
 
-    const result = members.map((member) => {
+  const result = members.map((member) => {
     const latestSub = member.subscriptions[0];
     return {
       id: member.id,
@@ -47,6 +47,7 @@ router.get('/', async (req: AuthRequest, res) => {
       phone: member.phone,
       photoUrl: member.photoUrl,
       plan: latestSub?.plan.name ?? null,
+      planId: latestSub?.planId ?? null,
       startDate: latestSub?.startDate ?? null, // <--- AGREGAR ESTA LÍNEA
       endDate: latestSub?.endDate ?? null,
       status: getStatus(latestSub?.endDate ?? null, graceDays),

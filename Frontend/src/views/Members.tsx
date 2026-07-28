@@ -12,6 +12,7 @@ interface Member {
   photoUrl: string | null;
   plan: string | null;
   startDate: string | null; // <--- AGREGAR
+  planId?: string | null;
   endDate: string | null;
   status: 'sin_plan' | 'activo' | 'por_vencer' | 'en_gracia' | 'vencido';
 }
@@ -299,12 +300,19 @@ export default function Members() {
           photoUrl: selectedMember.photoUrl // <--- AGREGAR ESTO
         } : undefined}
       />
-
+      
       <RenovationModal
         isOpen={renovationModalOpen}
         onClose={() => setRenovationModalOpen(false)}
         onRenewed={loadMembers}
-        member={selectedMember ? { id: selectedMember.id, fullName: selectedMember.fullName, cedula: selectedMember.cedula, plan: selectedMember.plan, endDate: selectedMember.endDate } : undefined}
+        member={selectedMember ? { 
+          id: selectedMember.id, 
+          fullName: selectedMember.fullName, 
+          cedula: selectedMember.cedula, 
+          plan: selectedMember.plan, 
+          planId: selectedMember.planId, // <--- AGREGAR
+          endDate: selectedMember.endDate 
+        } : undefined}
       />
     </>
   );

@@ -20,10 +20,10 @@ async function main() {
 
   const passwordHash = await bcrypt.hash(password, 10);
 
-  // Usamos upsert: si ya existe, no hace nada; si no existe, lo crea.
+  // Usamos upsert: si ya existe, ACTUALIZA la contraseña; si no existe, lo crea.
   const admin = await prisma.superAdmin.upsert({
     where: { email },
-    update: {}, // No actualizamos nada si ya existe
+    update: { passwordHash }, // <--- Aquí le decimos que actualice la contraseña
     create: { email, passwordHash },
   });
 

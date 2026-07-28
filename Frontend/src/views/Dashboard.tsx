@@ -9,6 +9,7 @@ interface Member {
   phone: string | null;
   photoUrl: string | null;
   plan: string | null;
+  planId?: string | null; 
   endDate: string | null;
   status: 'sin_plan' | 'activo' | 'por_vencer' | 'en_gracia' | 'vencido';
 }
@@ -485,7 +486,14 @@ export default function Dashboard() {
         isOpen={renovationModalOpen}
         onClose={() => setRenovationModalOpen(false)}
         onRenewed={loadData}
-        member={selectedMember ? { id: selectedMember.id, fullName: selectedMember.fullName, cedula: selectedMember.cedula, plan: selectedMember.plan, endDate: selectedMember.endDate } : undefined}
+        member={selectedMember ? { 
+          id: selectedMember.id, 
+          fullName: selectedMember.fullName, 
+          cedula: selectedMember.cedula, 
+          plan: selectedMember.plan, 
+          planId: selectedMember.planId, // <--- AGREGAR
+          endDate: selectedMember.endDate 
+        } : undefined}
       />
     </>
   );

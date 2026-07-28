@@ -14,6 +14,7 @@ interface RenovationModalProps {
     fullName: string;
     cedula: string;
     plan?: string | null;
+    planId?: string | null; // <--- AGREGAR ESTO
     endDate?: string | null;
   };
 }
@@ -91,7 +92,7 @@ export default function RenovationModal({ isOpen, onClose, onRenewed, member }: 
 
   }, [isOpen]);
 
-  useEffect(() => {
+    useEffect(() => {
     if (!isOpen) {
       setSelectedPlanId('');
       setStartDate(new Date().toISOString().slice(0, 10));
@@ -100,8 +101,13 @@ export default function RenovationModal({ isOpen, onClose, onRenewed, member }: 
       setSearchError(null);
       setError(null);
       setPayments([{ id: generateId(), method: 'Efectivo', amount: '', reference: '' }]);
+    } else {
+      // NUEVO: Si el miembro ya tiene un plan, lo preseleccionamos
+      if (member?.planId) {
+        setSelectedPlanId(member.planId);
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, member]);
 
   if (!isOpen) return null;
 
