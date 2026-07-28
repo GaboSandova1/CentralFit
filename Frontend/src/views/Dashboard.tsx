@@ -41,6 +41,7 @@ export default function Dashboard() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formSuccess, setFormSuccess] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({}); // NUEVO
 
   const [form, setForm] = useState({
     fullName: '',
@@ -50,7 +51,7 @@ export default function Dashboard() {
     startDate: new Date().toISOString().slice(0, 10),
     method: 'Efectivo',
     reference: '',
-    photoUrl: '', // NUEVO
+    photoUrl: '',
   });
 
   const loadData = async () => {
@@ -93,7 +94,6 @@ export default function Dashboard() {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
-  // NUEVO: Manejar subida de imagen
   const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -109,24 +109,27 @@ export default function Dashboard() {
     }
   };
 
-  const validateForm = (): string | null => {
-    if (!form.fullName.trim()) return 'El nombre completo es requerido';
-    if (!/^\d{7,8}$/.test(form.cedula)) return 'La cédula debe tener entre 7 y 8 números';
-    if (form.phone && !/^\d{11}$/.test(form.phone)) return 'El teléfono debe tener exactamente 11 números';
-    if (form.planId && !form.method) return 'Selecciona un método de pago';
+  // NUEVA VALIDACIÓN
+  const validateForm = (): Record<string, string> => {
+    const errors: Record<string, string> = {};
+    if (!form.fullName.trim()) errors.fullName = 'El nombre es requerido';
+    if (!/^\d{7,8}$/.test(form.cedula)) errors.cedula = 'Cédula inválida (7-8 números)';
+    if (form.phone && !/^\d{11}$/.test(form.phone)) errors.phone = 'Debe tener 11 números';
+    if (form.planId && !form.method) errors.method = 'Selecciona un método';
     if (form.planId && form.method !== 'Efectivo' && !form.reference.trim()) {
-      return 'La referencia es requerida para este método de pago';
+      errors.reference = 'La referencia es requerida';
     }
-    return null;
+    return errors;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const validationError = validateForm();
-    if (validationError) {
-      setError(validationError);
+    const errors = validateForm();
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
       return;
     }
+    setFormErrors({}); // Limpiar errores
 
     setIsSubmitting(true);
     setError(null);
@@ -139,7 +142,7 @@ export default function Dashboard() {
           fullName: form.fullName,
           cedula: form.cedula,
           phone: form.phone || undefined,
-          photoUrl: form.photoUrl || undefined, // NUEVO
+          photoUrl: form.photoUrl || undefined,
           planId: form.planId || undefined,
           startDate: form.startDate,
           method: form.planId ? form.method : undefined,
@@ -164,7 +167,7 @@ export default function Dashboard() {
         startDate: new Date().toISOString().slice(0, 10),
         method: 'Efectivo',
         reference: '',
-        photoUrl: '', // Limpiar foto
+        photoUrl: '',
       });
       loadData();
     } catch {
@@ -266,10 +269,11 @@ export default function Dashboard() {
               <input
                 type="text"
                 placeholder="John Doe"
-                className="bg-surface border border-outline-variant rounded-md px-3 py-1.5 text-body-sm text-on-surface focus:outline-none focus:border-primary"
+                className={`bg-surface border rounded-md px-3 py-1.5 text-body-sm text-on-surface focus:outline-none focus:border-primary ${formErrors.fullName ? 'border-error' : 'border-outline-variant'}`}
                 value={form.fullName}
                 onChange={(e) => handleFormChange('fullName', e.target.value)}
               />
+              {formErrors.fullName && <p className="text-error text-[11px] mt-1">{formErrors.fullName}</p>}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -280,10 +284,11 @@ export default function Dashboard() {
                   inputMode="numeric"
                   maxLength={8}
                   placeholder="12345678"
-                  className="bg-surface border border-outline-variant rounded-md px-3 py-1.5 text-body-sm text-on-surface focus:outline-none focus:border-primary"
+                  className={`bg-surface border rounded-md px-3 py-1.5 text-body-sm text-on-surface focus:outline-none focus:border-primary ${formErrors.cedula ? 'border-error' : 'border-outline-variant'}`}
                   value={form.cedula}
                   onChange={(e) => updateDigitsOnly('cedula', e.target.value, 8)}
                 />
+                {formErrors.cedula && <p className="text-error text-[11px] mt-1">{formErrors.cedula}</p>}
               </div>
               <div className="flex flex-col gap-1">
                 <label className="font-label-sm text-label-sm text-on-surface-variant uppercase">Teléfono</label>
@@ -292,10 +297,11 @@ export default function Dashboard() {
                   inputMode="numeric"
                   maxLength={11}
                   placeholder="04121234567"
-                  className="bg-surface border border-outline-variant rounded-md px-3 py-1.5 text-body-sm text-on-surface focus:outline-none focus:border-primary"
+                  className={`bg-surface border rounded-md px-3 py-1.5 text-body-sm text-on-surface focus:outline-none focus:border-primary ${formErrors.phone ? 'border-error' : 'border-outline-variant'}`}
                   value={form.phone}
                   onChange={(e) => updateDigitsOnly('phone', e.target.value, 11)}
                 />
+                {formErrors.phone && <p className="text-error text-[11px] mt-1">{formErrors.phone}</p>}
               </div>
             </div>
 
@@ -329,7 +335,7 @@ export default function Dashboard() {
                 <div className="flex flex-col gap-1">
                   <label className="font-label-sm text-label-sm text-on-surface-variant uppercase">Método de Pago</label>
                   <select
-                    className="bg-surface border border-outline-variant rounded-md px-3 py-1.5 text-body-sm text-on-surface focus:outline-none focus:border-primary appearance-none"
+                    className={`bg-surface border rounded-md px-3 py-1.5 text-body-sm text-on-surface focus:outline-none focus:border-primary appearance-none ${formErrors.method ? 'border-error' : 'border-outline-variant'}`}
                     value={form.method}
                     onChange={(e) => handleFormChange('method', e.target.value)}
                   >
@@ -338,6 +344,7 @@ export default function Dashboard() {
                     <option>Pago Móvil</option>
                     <option>Binance</option>
                   </select>
+                  {formErrors.method && <p className="text-error text-[11px] mt-1">{formErrors.method}</p>}
                 </div>
                 {form.method !== 'Efectivo' && (
                   <div className="flex flex-col gap-1">
@@ -345,16 +352,17 @@ export default function Dashboard() {
                     <input
                       type="text"
                       placeholder="0000"
-                      className="bg-surface border border-outline-variant rounded-md px-3 py-1.5 text-body-sm text-on-surface focus:outline-none focus:border-primary"
+                      className={`bg-surface border rounded-md px-3 py-1.5 text-body-sm text-on-surface focus:outline-none focus:border-primary ${formErrors.reference ? 'border-error' : 'border-outline-variant'}`}
                       value={form.reference}
                       onChange={(e) => handleFormChange('reference', e.target.value)}
                     />
+                    {formErrors.reference && <p className="text-error text-[11px] mt-1">{formErrors.reference}</p>}
                   </div>
                 )}
               </div>
             )}
 
-            {/* NUEVO: Input de Foto Funcional */}
+            {/* Input de Foto Funcional */}
             <div className="flex flex-col gap-1.5 mb-2">
               <label className="font-label-sm text-label-sm text-on-surface-variant uppercase">Fotografía del Afiliado (Opcional)</label>
               <div className="flex items-center gap-3">
@@ -491,7 +499,7 @@ export default function Dashboard() {
           fullName: selectedMember.fullName, 
           cedula: selectedMember.cedula, 
           plan: selectedMember.plan, 
-          planId: selectedMember.planId, // <--- AGREGAR
+          planId: selectedMember.planId, 
           endDate: selectedMember.endDate 
         } : undefined}
       />

@@ -36,13 +36,8 @@ export default function Login({ onLogin, onNavigateToRegister, onLoginSuperAdmin
         return;
       }
 
-      // Si "Recordarme" está activo, persiste entre sesiones (localStorage);
-      // si no, se borra al cerrar la pestaña (sessionStorage).
-      if (rememberMe) {
-        localStorage.setItem('token', data.token);
-      } else {
-        sessionStorage.setItem('token', data.token);
-      }
+      // Guardamos siempre en localStorage para que la sesión persista entre pestañas
+      localStorage.setItem('token', data.token);
 
       onLogin();
     } catch {
