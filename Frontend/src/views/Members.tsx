@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import ConfirmMemberDeletionModal from '../components/ConfirmMemberDeletionModal';
 import EditMemberModal from '../components/EditMemberModal';
 import RenovationModal from '../components/RenovationModal';
@@ -11,7 +12,7 @@ interface Member {
   phone: string | null;
   photoUrl: string | null;
   plan: string | null;
-  startDate: string | null; // <--- AGREGAR
+  startDate: string | null;
   planId?: string | null;
   endDate: string | null;
   status: 'sin_plan' | 'activo' | 'por_vencer' | 'en_gracia' | 'vencido';
@@ -39,17 +40,25 @@ function formatDate(dateStr: string | null): string {
 }
 
 export default function Members() {
+  const [searchParams] = useSearchParams();
+  const initialStatus = (searchParams.get('status') as 'all' | 'activo' | 'por_vencer' | 'vencido') || 'all';
+
   const [members, setMembers] = useState<Member[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [statusFilter, setStatusFilter] = useState<'all' | 'activo' | 'por_vencer' | 'vencido'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'activo' | 'por_vencer' | 'vencido'>(initialStatus);
   const [searchQuery, setSearchQuery] = useState('');
 
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [renovationModalOpen, setRenovationModalOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+
+  // Si la URL cambia, actualizamos el filtro
+  useEffect(() => {
+    setStatusFilter(initialStatus);
+  }, [initialStatus]);
 
   const loadMembers = async () => {
     setIsLoading(true);
@@ -212,7 +221,7 @@ export default function Members() {
                 <tr className="border-b border-outline-variant bg-surface-container-lowest">
                   <th className="p-3 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider w-[250px]">Nombre del Miembro</th>
                   <th className="p-3 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Plan de Suscripción</th>
-                  <th className="p-3 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Fecha de Inicio</th> 
+                  <th className="p-3 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Fecha de Inicio</th>
                   <th className="p-3 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Fecha de Vencimiento</th>
                   <th className="p-3 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Estado</th>
                   <th className="p-3 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Acciones</th>
@@ -237,9 +246,7 @@ export default function Members() {
                       </div>
                     </td>
                     <td className="p-3 font-body-sm text-on-surface-variant text-[14px]">{member.plan ?? 'Sin plan'}</td>
-                    {/* NUEVA CELDA */}
                     <td className="p-3 font-body-sm text-on-surface-variant text-[14px]">{formatDate(member.startDate)}</td>
-                    {/* FIN NUEVA CELDA */}
                     <td className="p-3 font-body-sm text-on-surface-variant text-[14px]">{formatDate(member.endDate)}</td>
                     <td className="p-3">
                       <span className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-[12px] font-semibold border min-w-[80px] ${STATUS_STYLES[member.status]}`}>
@@ -297,7 +304,7 @@ export default function Members() {
           fullName: selectedMember.fullName, 
           cedula: selectedMember.cedula, 
           phone: selectedMember.phone ?? '', 
-          photoUrl: selectedMember.photoUrl // <--- AGREGAR ESTO
+          photoUrl: selectedMember.photoUrl 
         } : undefined}
       />
       
@@ -310,7 +317,7 @@ export default function Members() {
           fullName: selectedMember.fullName, 
           cedula: selectedMember.cedula, 
           plan: selectedMember.plan, 
-          planId: selectedMember.planId, // <--- AGREGAR
+          planId: selectedMember.planId, 
           endDate: selectedMember.endDate 
         } : undefined}
       />

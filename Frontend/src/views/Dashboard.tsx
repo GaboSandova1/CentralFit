@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import RenovationModal from '../components/RenovationModal';
 import { apiFetch, uploadProfilePicture } from '../lib/api';
+import { Link } from 'react-router-dom';
 
 interface Member {
   id: string;
@@ -210,15 +211,15 @@ export default function Dashboard() {
 
       {/* Top Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-surface-container rounded-xl border border-outline-variant p-4 flex flex-col justify-between hover:border-primary/50 transition-colors">
+        <Link to="/members" className="bg-surface-container rounded-xl border border-outline-variant p-4 flex flex-col justify-between hover:border-primary/50 transition-colors">
           <div className="flex justify-between items-start mb-2">
             <h3 className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Total de Miembros</h3>
             <span className="material-symbols-outlined text-primary">group</span>
           </div>
           <span className="font-headline-md text-headline-md text-on-surface">{isLoading ? '—' : totalMembers}</span>
-        </div>
+        </Link>
 
-        <div className="bg-surface-container rounded-xl border border-outline-variant p-4 flex flex-col justify-between hover:border-primary/50 transition-colors">
+        <Link to="/members?status=activo" className="bg-surface-container rounded-xl border border-outline-variant p-4 flex flex-col justify-between hover:border-primary/50 transition-colors">
           <div className="flex justify-between items-start mb-2">
             <h3 className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Activos</h3>
             <span className="material-symbols-outlined text-primary">check_circle</span>
@@ -227,9 +228,9 @@ export default function Dashboard() {
             <span className="font-headline-md text-headline-md text-on-surface">{isLoading ? '—' : activeMembers}</span>
             <span className="text-on-surface-variant text-label-sm font-label-sm">actualmente</span>
           </div>
-        </div>
+        </Link>
 
-        <div className="bg-surface-container rounded-xl border border-tertiary/50 p-4 flex flex-col justify-between hover:border-tertiary transition-colors shadow-[0_0_10px_rgba(255,184,110,0.05)]">
+        <Link to="/members?status=por_vencer" className="bg-surface-container rounded-xl border border-tertiary/50 p-4 flex flex-col justify-between hover:border-tertiary transition-colors shadow-[0_0_10px_rgba(255,184,110,0.05)] cursor-pointer">
           <div className="flex justify-between items-start mb-2">
             <h3 className="font-label-sm text-label-sm text-tertiary uppercase tracking-wider">Por Vencer</h3>
             <span className="material-symbols-outlined text-tertiary">warning</span>
@@ -238,9 +239,9 @@ export default function Dashboard() {
             <span className="font-headline-md text-headline-md text-on-surface">{isLoading ? '—' : dueSoonMembers}</span>
             <span className="text-on-surface-variant text-label-sm font-label-sm leading-tight">En 7 días</span>
           </div>
-        </div>
+        </Link>
 
-        <div className="bg-surface-container rounded-xl border border-error/50 p-4 flex flex-col justify-between hover:border-error transition-colors shadow-[0_0_10px_rgba(255,180,171,0.05)]">
+        <Link to="/members?status=vencido" className="bg-surface-container rounded-xl border border-error/50 p-4 flex flex-col justify-between hover:border-error transition-colors shadow-[0_0_10px_rgba(255,180,171,0.05)] cursor-pointer">
           <div className="flex justify-between items-start mb-2">
             <h3 className="font-label-sm text-label-sm text-error uppercase tracking-wider">Vencidos</h3>
             <span className="material-symbols-outlined text-error">error</span>
@@ -249,7 +250,7 @@ export default function Dashboard() {
             <span className="font-headline-md text-headline-md text-on-surface">{isLoading ? '—' : overdueMembers}</span>
             <span className="text-on-surface-variant text-label-sm font-label-sm">Requiere acción</span>
           </div>
-        </div>
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

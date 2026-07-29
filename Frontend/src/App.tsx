@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ViewState } from './types';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import Login from './views/Login';
 import Register from './views/Register';
 import Dashboard from './views/Dashboard';
@@ -11,58 +11,76 @@ import SuperAdmin from './views/SuperAdmin';
 import SuperAdminLogin from './views/SuperAdminLogin';
 import Splash from './views/Splash';
 
-function getInitialView(): ViewState {
-  if (localStorage.getItem('adminToken')) return 'superadmin';
-  if (localStorage.getItem('token') || sessionStorage.getItem('token')) return 'dashboard';
-  return 'login';
+// Wrappers para adaptar las props a useNavigate
+const LoginWrapper = () => {
+  const navigate = useNavigate();
+  return (
+    <Login
+      onLogin={() => navigate('/dashboard')}
+      onNavigateToRegister={() => navigate('/register')}
+      onLoginSuperAdmin={() => navigate('/superadminlogin')}
+    />
+  );
+};
+
+const RegisterWrapper = () => {
+  const navigate = useNavigate();
+  return (
+    <Register
+      onRegisterComplete={() => navigate('/dashboard')}
+      onClose={() => navigate('/login')}
+    />
+  );
+};
+
+const SuperAdminLoginWrapper = () => {
+  const navigate = useNavigate();
+  return (
+    <SuperAdminLogin
+      onLoginSuccess={() => navigate('/superadmin')}
+      onBack={() => navigate('/login')}
+    />
+  );
+};
+
+const SuperAdminWrapper = () => {
+  const navigate = useNavigate();
+  return <SuperAdmin onLogout={() => navigate('/login')} />;
+};
+
+function getInitialRoute() {
+  if (localStorage.getItem('adminToken')) return '/superadmin';
+  if (localStorage.getItem('token')) return '/dashboard';
+  return '/login';
 }
 
 export default function App() {
-  const [currentView, setCurrentView] = useState<ViewState>('splash');
+  const [showSplash, setShowSplash] = useState(true);
 
-  if (currentView === 'splash') {
-    // Al terminar el splash, verificamos si hay sesión activa en vez de mandar al login siempre
-    return <Splash onComplete={() => setCurrentView(getInitialView())} />;
-  }
-
-  if (currentView === 'login') {
-    return (
-      <Login
-        onLogin={() => setCurrentView('dashboard')}
-        onNavigateToRegister={() => setCurrentView('register')}
-        onLoginSuperAdmin={() => setCurrentView('superadminlogin')}
-      />
-    );
-  }
-
-  if (currentView === 'register') {
-    return (
-      <Register
-        onRegisterComplete={() => setCurrentView('dashboard')}
-        onClose={() => setCurrentView('login')}
-      />
-    );
-  }
-
-  if (currentView === 'superadminlogin') {
-    return (
-      <SuperAdminLogin
-        onLoginSuccess={() => setCurrentView('superadmin')}
-        onBack={() => setCurrentView('login')}
-      />
-    );
-  }
-
-  if (currentView === 'superadmin') {
-    return <SuperAdmin onLogout={() => setCurrentView('login')} />;
+  if (showSplash) {
+    return <Splash onComplete={() => setShowSplash(false)} />;
   }
 
   return (
-    <Layout currentView={currentView} onViewChange={setCurrentView}>
-      {currentView === 'dashboard' && <Dashboard />}
-      {currentView === 'members' && <Members />}
-      {currentView === 'plans' && <Plans />}
-      {currentView === 'reports' && <Reports />}
-    </Layout>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Navigate to={getInitialRoute()} replace />} />
+        <Route path="/login" element={<LoginWrapper />} />
+        <Route path="/register" element={<RegisterWrapper />} />
+        <Route path="/superadminlogin" element={<SuperAdminLoginWrapper />} />
+        <Route path="/superadmin" element={<SuperAdminWrapper />} />
+        
+        {/* Rutas protegidas que usan el Layout */}
+        <Route element={<Layout />}>
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/members" element={<Members />} />
+          <Route path="/plans" element={<Plans />} />
+          <Route path="/reports" element={<Reports />} />
+        </Route>
+
+        {/* Si la URL no existe, lo mandamos al inicio */}
+        <Route path="*" element={<Navigate to={getInitialRoute()} replace />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
