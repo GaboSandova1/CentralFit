@@ -374,6 +374,7 @@ export default function RenovationModal({ isOpen, onClose, onRenewed, member }: 
                         onClick={() => removePaymentMethod(pay.id)} 
                         className="ml-auto text-error/80 hover:text-error transition-colors cursor-pointer"
                         title="Quitar método"
+                        type="button"
                       >
                         <span className="material-symbols-outlined text-[18px]">close</span>
                       </button>
@@ -494,12 +495,14 @@ export default function RenovationModal({ isOpen, onClose, onRenewed, member }: 
             onClick={onClose}
             disabled={isSubmitting}
             className="px-5 py-2 rounded-DEFAULT border border-outline-variant text-on-surface font-label-md text-label-md hover:bg-surface-container-high hover:border-on-surface-variant transition-colors flex items-center justify-center cursor-pointer disabled:opacity-60"
+            type="button"
           >
             Cancelar
           </button>
           <button
             onClick={handleSubmit}
             disabled={isSubmitting || !activeMember || !isExactMatch || !hasValidReferences}
+            type="button"
             className="px-5 py-1.5 rounded-DEFAULT bg-primary text-on-primary font-label-md text-label-md hover:bg-primary-container transition-colors flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {isSubmitting ? (

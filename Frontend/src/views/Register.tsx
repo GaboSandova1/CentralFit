@@ -432,6 +432,7 @@ export default function Register({ onRegisterComplete, onClose }: RegisterProps)
         <div className="px-6 py-3 bg-surface-container-high border-t border-outline-variant flex items-center justify-between">
           <button
             onClick={handlePrev}
+            type="button"
             disabled={isSubmitting}
             className={`flex items-center gap-2 px-6 py-2 rounded-lg border border-outline text-on-surface hover:bg-surface-container transition-all cursor-pointer ${currentStep === 1 ? 'invisible' : ''}`}
           >
@@ -439,6 +440,7 @@ export default function Register({ onRegisterComplete, onClose }: RegisterProps)
             <span className="font-semibold">Anterior</span>
           </button>
           <button
+            type="button"
             onClick={handleNext}
             disabled={isSubmitting}
             className={`flex items-center gap-2 px-8 py-2 rounded-lg text-on-primary hover:brightness-110 transition-all shadow-lg shadow-primary/20 cursor-pointer disabled:opacity-60 ${currentStep === totalSteps ? 'bg-primary-container' : 'bg-primary'}`}

@@ -84,7 +84,7 @@ export default function NewPlanModal({ isOpen, onClose, onCreated }: NewPlanModa
       <div className="bg-surface-container w-full max-w-lg rounded-xl border border-outline-variant shadow-2xl overflow-hidden animate-[fadeIn_0.3s_ease-out] flex flex-col max-h-[90vh]">
         <div className="px-5 py-4 border-b bg-surface-container-high flex justify-between items-center border-outline-variant shrink-0">
           <h3 className="text-lg font-headline-md text-on-surface">Crear Nuevo Plan</h3>
-          <button onClick={handleClose} className="text-on-surface-variant hover:text-white transition-colors cursor-pointer">
+          <button onClick={handleClose} className="text-on-surface-variant hover:text-white transition-colors cursor-pointer" type="button">
             <span className="material-symbols-outlined">close</span>
           </button>
         </div>
@@ -175,10 +175,10 @@ export default function NewPlanModal({ isOpen, onClose, onCreated }: NewPlanModa
           </form>
         </div>
         <div className="px-5 py-4 bg-surface-container-high border-t border-outline-variant flex justify-end gap-3 shrink-0">
-          <button onClick={handleClose} disabled={isSaving} className="px-4 py-2 rounded-lg text-label-md font-label-md text-on-surface hover:bg-surface-variant transition-colors border border-outline-variant cursor-pointer disabled:opacity-60">
+          <button onClick={handleClose} disabled={isSaving} className="px-4 py-2 rounded-lg text-label-md font-label-md text-on-surface hover:bg-surface-variant transition-colors border border-outline-variant cursor-pointer disabled:opacity-60" type="button">
             Cancelar
           </button>
-          <button onClick={handleCreate} disabled={isSaving} className="px-4 py-2 rounded-lg text-label-md font-label-md bg-primary text-on-primary font-bold hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-primary/20 cursor-pointer disabled:opacity-60 flex items-center gap-2">
+          <button onClick={handleCreate} disabled={isSaving} className="px-4 py-2 rounded-lg text-label-md font-label-md bg-primary text-on-primary font-bold hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-primary/20 cursor-pointer disabled:opacity-60 flex items-center gap-2" type="button">
             {isSaving ? (
               <>
                 <span className="material-symbols-outlined animate-spin text-[18px]">sync</span>

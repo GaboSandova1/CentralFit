@@ -115,6 +115,7 @@ export default function Reports() {
         </div>
         <button
           onClick={() => { setHistoryInitialRange('today'); setHistoryModalOpen(true); }}
+          type="button"
           className="flex items-center gap-2 px-4 py-2 bg-primary/20 border border-primary/30 text-primary rounded-md font-label-sm hover:bg-primary/30 transition-colors cursor-pointer"
         >
           <span className="material-symbols-outlined text-[18px]">calendar_today</span>
@@ -176,7 +177,7 @@ export default function Reports() {
       <div className="bg-surface-container rounded-xl border border-outline-variant overflow-hidden mb-4">
         <div className="p-4 border-b border-outline-variant flex justify-between items-center bg-surface-container-high/30">
           <h3 className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Resumen de Transacciones</h3>
-          <button onClick={() => setHistoryModalOpen(true)} className="text-primary font-label-sm text-label-sm hover:underline cursor-pointer">Ver todas</button>
+          <button onClick={() => setHistoryModalOpen(true)} className="text-primary font-label-sm text-label-sm hover:underline cursor-pointer" type="button">Ver todas</button>
         </div>
         <div className="overflow-x-auto overflow-y-auto max-h-[320px]">
           {isLoading ? (

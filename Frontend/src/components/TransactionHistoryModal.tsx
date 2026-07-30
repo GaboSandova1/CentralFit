@@ -118,7 +118,7 @@ export default function TransactionHistoryModal({ isOpen, onClose, initialRange 
         {/* Modal Header */}
         <div className="px-5 py-4 border-b border-outline-variant flex justify-between items-center bg-surface-container-high shrink-0">
           <h3 className="text-lg font-headline-md text-on-surface">Historial de Transacciones</h3>
-          <button onClick={onClose} className="text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer">
+          <button onClick={onClose} className="text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer" type="button">
             <span className="material-symbols-outlined">close</span>
           </button>
         </div>
@@ -169,6 +169,7 @@ export default function TransactionHistoryModal({ isOpen, onClose, initialRange 
           <button
             onClick={() => downloadCsv(transactions)}
             disabled={transactions.length === 0}
+            type="button"
             className="flex items-center gap-2 px-4 py-1.5 bg-primary/20 border border-primary/30 text-primary rounded-md font-label-sm hover:bg-primary/30 transition-colors cursor-pointer disabled:opacity-50"
           >
             <span className="material-symbols-outlined text-[18px]">download</span>

@@ -47,6 +47,7 @@ export default function Sidebar({ isOpen, onClose, onOpenRenovation, onOpenSetti
             onClick={onClose}
             className="md:hidden text-on-surface-variant hover:text-on-surface p-1 rounded-lg cursor-pointer"
             aria-label="Cerrar menú"
+            type="button"
           >
             <span className="material-symbols-outlined">close</span>
           </button>
@@ -82,6 +83,7 @@ export default function Sidebar({ isOpen, onClose, onOpenRenovation, onOpenSetti
         <div className="px-4 mt-auto space-y-4">
           <button 
             onClick={onOpenRenovation}
+            type="button"
             className="w-full flex items-center justify-center gap-2 py-2.5 px-3 bg-primary-container text-on-primary-container font-headline-md text-label-md rounded-lg hover:opacity-90 transition-all active:scale-95 mb-4 cursor-pointer"
           >
             <span className="material-symbols-outlined">autorenew</span>

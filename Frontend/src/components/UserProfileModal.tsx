@@ -131,7 +131,7 @@ export default function UserProfileModal({ isOpen, onClose, onProfileUpdated }: 
         {/* Modal Header */}
         <div className="flex justify-between items-center p-4 border-b border-surface-variant">
           <h2 className="font-headline-md text-lg text-on-surface">Perfil de Administrador</h2>
-          <button onClick={onClose} aria-label="Close modal" className="text-on-surface-variant hover:text-on-surface transition-colors focus:outline-none cursor-pointer">
+          <button onClick={onClose} aria-label="Close modal" className="text-on-surface-variant hover:text-on-surface transition-colors focus:outline-none cursor-pointer" type="button">
             <span className="material-symbols-outlined">close</span>
           </button>
         </div>
@@ -234,6 +234,7 @@ export default function UserProfileModal({ isOpen, onClose, onProfileUpdated }: 
                   <button
                     onClick={handleUpdatePassword}
                     disabled={isUpdatingPassword}
+                    type="button"
                     className="px-4 py-1.5 bg-primary/20 text-primary border border-primary/50 rounded font-label-md hover:bg-primary/30 transition-colors cursor-pointer disabled:opacity-60"
                   >
                     {isUpdatingPassword ? 'Actualizando...' : 'Actualizar'}
@@ -245,7 +246,7 @@ export default function UserProfileModal({ isOpen, onClose, onProfileUpdated }: 
         </div>
         {/* Modal Footer */}
         <div className="p-3 bg-surface-container-high border-t border-surface-variant flex justify-end gap-4 shrink-0">
-          <button onClick={onClose} className="px-5 py-2 rounded font-label-md text-label-md text-on-surface border border-surface-variant hover:bg-surface-variant/50 transition-colors cursor-pointer">
+          <button onClick={onClose} className="px-5 py-2 rounded font-label-md text-label-md text-on-surface border border-surface-variant hover:bg-surface-variant/50 transition-colors cursor-pointer" type="button">
             Cerrar
           </button>
         </div>

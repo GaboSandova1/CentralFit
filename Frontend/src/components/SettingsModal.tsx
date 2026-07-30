@@ -91,6 +91,7 @@ export default function SettingsModal({ isOpen, onClose, onSettingsSaved }: Sett
           <button
             onClick={onClose}
             aria-label="Cerrar modal"
+            type="button"
             className="text-on-surface-variant hover:text-on-surface hover:bg-surface-variant p-2 rounded-full transition-colors flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
           >
             <span className="material-symbols-outlined">close</span>
@@ -194,10 +195,10 @@ export default function SettingsModal({ isOpen, onClose, onSettingsSaved }: Sett
         </div>
 
         <div className="px-container-padding py-3 border-t border-outline-variant bg-surface-container flex justify-end gap-3 shrink-0">
-          <button onClick={onClose} disabled={isSaving} className="px-4 py-2 border border-outline-variant rounded-lg text-on-surface font-label-md text-label-md hover:bg-surface-container-high transition-colors cursor-pointer disabled:opacity-60">
+          <button onClick={onClose} disabled={isSaving} className="px-4 py-2 border border-outline-variant rounded-lg text-on-surface font-label-md text-label-md hover:bg-surface-container-high transition-colors cursor-pointer disabled:opacity-60" type="button">
             Cancelar
           </button>
-          <button onClick={handleSave} disabled={isSaving || isLoading} className="px-4 py-2 bg-primary text-on-primary rounded-lg font-label-md text-label-md hover:bg-primary-fixed transition-colors cursor-pointer disabled:opacity-60 flex items-center gap-2">
+          <button onClick={handleSave} disabled={isSaving || isLoading} className="px-4 py-2 bg-primary text-on-primary rounded-lg font-label-md text-label-md hover:bg-primary-fixed transition-colors cursor-pointer disabled:opacity-60 flex items-center gap-2" type="button">
             {isSaving ? (
               <>
                 <span className="material-symbols-outlined animate-spin text-[18px]">sync</span>

@@ -28,13 +28,15 @@ export default function Login({ onLogin, onNavigateToRegister, onLoginSuperAdmin
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await response.json();
-
+      // 1. Revisamos el status HTTP primero
       if (!response.ok) {
-        setError(data.error || 'Credenciales inválidas');
-        setIsSubmitting(false);
-        return;
+        const errorData = await response.json().catch(() => ({}));
+        setError(errorData.error || 'Credenciales inválidas');
+        return; // Cortamos acá, no intentamos leer el token
       }
+
+      // 2. Si llegó aquí, es un 200 OK, entonces leemos el token
+      const data = await response.json();
 
       // Guardamos siempre en localStorage para que la sesión persista entre pestañas
       localStorage.setItem('token', data.token);
@@ -42,6 +44,7 @@ export default function Login({ onLogin, onNavigateToRegister, onLoginSuperAdmin
       onLogin();
     } catch {
       setError('No se pudo conectar con el servidor. Intenta de nuevo.');
+    } finally {
       setIsSubmitting(false);
     }
   };

@@ -15,8 +15,15 @@ export default function ConfirmMemberDeletionModal({ isOpen, onClose, onConfirm,
 
   const handleConfirm = async () => {
     setIsDeleting(true);
-    await onConfirm();
-    setIsDeleting(false);
+    try {
+      await onConfirm();
+    } catch (error) {
+      console.error('Error al eliminar:', error);
+    } finally {
+      // El bloque finally se ejecuta SIEMPRE, haya éxito o error.
+      // Así nos aseguramos de que el botón no se quede cargando para siempre.
+      setIsDeleting(false);
+    }
   };
 
   return (

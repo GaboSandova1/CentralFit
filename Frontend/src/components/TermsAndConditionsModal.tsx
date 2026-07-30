@@ -126,6 +126,7 @@ export default function TermsAndConditionsModal({ isOpen, onClose }: TermsAndCon
           <button 
             onClick={onClose} 
             aria-label="Close modal" 
+            type="button"
             className="w-8 h-8 flex items-center justify-center rounded-full text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors focus:outline-none cursor-pointer"
           >
             <span className="material-symbols-outlined text-[20px]">close</span>
@@ -143,6 +144,7 @@ export default function TermsAndConditionsModal({ isOpen, onClose }: TermsAndCon
         <div className="px-6 py-4 border-t border-outline-variant/50 bg-surface-container-low flex justify-end shrink-0 rounded-b-2xl">
           <button 
             onClick={onClose} 
+            type="button"
             className="px-6 py-2.5 bg-primary text-on-primary rounded-lg font-label-md text-[14px] hover:bg-primary-fixed hover:-translate-y-0.5 transition-all shadow-md shadow-primary/10 cursor-pointer flex items-center gap-2"
           >
             <span className="material-symbols-outlined text-[18px]">check</span>

@@ -134,6 +134,7 @@ export default function Members() {
         <button
           onClick={loadMembers}
           disabled={isLoading}
+          type="button"
           className="flex items-center gap-2 px-3 py-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded-lg transition-colors cursor-pointer text-[13px] disabled:opacity-60 shrink-0"
         >
           <span className={`material-symbols-outlined text-[18px] ${isLoading ? 'animate-spin' : ''}`}>refresh</span>
@@ -241,7 +242,8 @@ export default function Members() {
                         </div>
                         <div>
                           <p className="font-body-sm text-on-surface font-medium leading-tight">{member.fullName}</p>
-                          <p className="font-label-sm text-on-surface-variant text-[12px]">C.I: {member.cedula}</p>
+                          {/* <p className="font-label-sm text-on-surface-variant text-[12px]">C.I: {member.cedula}</p> */}
+                          <p className="font-label-sm text-on-surface-variant text-[12px]">Tel: {member.phone}</p>
                         </div>
                       </div>
                     </td>
@@ -257,18 +259,21 @@ export default function Members() {
                       <div className="flex items-center gap-1">
                         <button
                           onClick={() => handleRenovateClick(member)}
+                          type="button"
                           className="w-8 h-8 rounded-lg hover:bg-primary/20 hover:text-primary flex items-center justify-center text-on-surface-variant transition-colors cursor-pointer" title="Renovar"
                         >
                           <span className="material-symbols-outlined text-[20px]">autorenew</span>
                         </button>
                         <button
                           onClick={() => handleEditClick(member)}
+                          type="button"
                           className="w-8 h-8 rounded-lg hover:bg-surface-container-high hover:text-on-surface flex items-center justify-center text-on-surface-variant transition-colors cursor-pointer" title="Editar"
                         >
                           <span className="material-symbols-outlined text-[20px]">edit</span>
                         </button>
                         <button
                           onClick={() => handleDeleteClick(member)}
+                          type="button"
                           className="w-8 h-8 rounded-lg hover:bg-error/20 hover:text-error flex items-center justify-center text-on-surface-variant transition-colors cursor-pointer" title="Eliminar"
                         >
                           <span className="material-symbols-outlined text-[20px]">delete</span>

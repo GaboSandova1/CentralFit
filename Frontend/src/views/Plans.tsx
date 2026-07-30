@@ -94,6 +94,7 @@ export default function Plans() {
         )}
         <button
           onClick={() => setNewPlanModalOpen(true)}
+          type="button"
           className="bg-primary text-on-primary font-label-md text-label-md px-5 py-2.5 rounded-lg hover:bg-primary-fixed transition-colors active:scale-95 flex items-center gap-2 shadow-[0_0_15px_rgba(81,224,132,0.2)] cursor-pointer"
         >
           <span className="material-symbols-outlined">add_circle</span>
@@ -149,12 +150,14 @@ export default function Plans() {
               <div className="flex gap-2 w-full md:w-auto justify-end md:justify-end">
                 <button
                   onClick={() => { setSelectedPlan(plan); setEditPlanModalOpen(true); }}
+                  type="button"
                   className="px-5 py-2 rounded-lg border border-outline-variant text-on-surface font-label-sm text-label-sm hover:bg-surface-container-high hover:border-on-surface transition-colors cursor-pointer"
                 >
                   Editar
                 </button>
                 <button
                   onClick={() => { setSelectedPlan(plan); setDeletePlanModalOpen(true); }}
+                  type="button"
                   className="w-10 h-10 rounded-lg flex items-center justify-center border border-error/30 text-error hover:bg-error hover:text-on-error hover:border-error transition-colors cursor-pointer"
                 >
                   <span className="material-symbols-outlined text-sm">delete</span>

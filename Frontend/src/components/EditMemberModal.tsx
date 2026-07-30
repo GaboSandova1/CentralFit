@@ -83,7 +83,7 @@ export default function EditMemberModal({ isOpen, onClose, onOpenDelete, onSaved
         {/* Modal Header */}
         <div className="px-5 py-4 border-b border-outline-variant flex justify-between items-center bg-surface-container-low shrink-0">
           <h3 className="font-headline-md text-lg text-on-surface">Editar perfil de miembro</h3>
-          <button onClick={onClose} className="text-on-surface-variant hover:text-on-surface transition-colors rounded-full p-1 hover:bg-surface-container-high focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer">
+          <button onClick={onClose} type="button" className="text-on-surface-variant hover:text-on-surface transition-colors rounded-full p-1 hover:bg-surface-container-high focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer">
             <span className="material-symbols-outlined">close</span>
           </button>
         </div>

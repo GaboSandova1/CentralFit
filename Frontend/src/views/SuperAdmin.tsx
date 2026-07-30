@@ -155,6 +155,7 @@ export default function SuperAdmin({ onLogout }: SuperAdminProps) {
         </div>
         <div className="px-4 mt-4">
           <button
+            type="button"
             onClick={() => {
               localStorage.removeItem('adminToken');
               onLogout();

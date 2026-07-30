@@ -195,6 +195,7 @@ export default function Dashboard() {
         <button
           onClick={loadData}
           disabled={isLoading}
+          type="button"
           className="flex items-center gap-2 px-3 py-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded-lg transition-colors cursor-pointer text-[13px] disabled:opacity-60 shrink-0"
         >
           <span className={`material-symbols-outlined text-[18px] ${isLoading ? 'animate-spin' : ''}`}>refresh</span>
@@ -481,6 +482,7 @@ export default function Dashboard() {
                             className={`flex items-center gap-1 font-label-sm transition-colors text-[14px] ${
                               isOverdue ? 'text-on-surface-variant hover:text-on-surface cursor-pointer' : 'text-on-surface-variant/50 cursor-not-allowed'
                             }`}
+                            type="button"
                           >
                             <span className="material-symbols-outlined">{isOverdue ? 'autorenew' : 'chat'}</span>
                             {isOverdue ? 'Renovar' : 'Recordar'}

@@ -25,7 +25,7 @@ export default function PaymentInfoModal({ isOpen, onClose }: PaymentInfoModalPr
               <p className="font-body-sm text-[13px] text-on-surface-variant mt-0.5">Datos para tu mensualidad de CentralFit</p>
             </div>
           </div>
-          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors cursor-pointer">
+          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors cursor-pointer" type="button">
             <span className="material-symbols-outlined text-[20px]">close</span>
           </button>
         </div>
@@ -84,7 +84,7 @@ export default function PaymentInfoModal({ isOpen, onClose }: PaymentInfoModalPr
 
         {/* Modal Footer */}
         <div className="px-6 py-4 border-t border-outline-variant/50 bg-surface-container-low flex justify-end shrink-0 rounded-b-2xl">
-          <button onClick={onClose} className="px-6 py-2.5 bg-primary text-on-primary rounded-lg font-label-md text-[14px] hover:bg-primary-fixed transition-all cursor-pointer flex items-center gap-2">
+          <button onClick={onClose} className="px-6 py-2.5 bg-primary text-on-primary rounded-lg font-label-md text-[14px] hover:bg-primary-fixed transition-all cursor-pointer flex items-center gap-2" type="button">
             <span className="material-symbols-outlined text-[18px]">check</span>
             Entendido
           </button>
