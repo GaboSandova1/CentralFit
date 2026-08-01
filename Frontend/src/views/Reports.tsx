@@ -55,16 +55,28 @@ export default function Reports() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  // Estado para la torta interactiva
+  // Estados de filtro
+  const [range, setRange] = useState<'today' | 'week' | 'month' | 'year' | 'custom'>('month');
+  const [customStart, setCustomStart] = useState('');
+  const [customEnd, setCustomEnd] = useState('');
+  
   const [hoveredMethod, setHoveredMethod] = useState<string | null>(null);
 
-  const loadData = async () => {
+  const loadData = async (selectedRange: string, start?: string, end?: string) => {
     setIsLoading(true);
     setError(null);
     try {
+      let query = `range=${selectedRange}`;
+      if (selectedRange === 'custom' && start && end) {
+        query = `startDate=${start}&endDate=${end}`;
+      } else if (selectedRange === 'custom' && (!start || !end)) {
+        setIsLoading(false);
+        return; // No cargamos hasta que tenga ambas fechas
+      }
+
       const [summaryRes, txRes, monthlyRes, rateRes] = await Promise.all([
-        apiFetch('/reports/summary'),
-        apiFetch('/reports/transactions'),
+        apiFetch(`/reports/summary?${query}`),
+        apiFetch(`/reports/transactions?${query}&limit=100`),
         apiFetch('/reports/monthly'),
         apiFetch('/exchange-rate'),
       ]);
@@ -83,8 +95,8 @@ export default function Reports() {
   };
 
   useEffect(() => {
-    loadData();
-  }, []);
+    loadData(range, customStart, customEnd);
+  }, [range, customStart, customEnd]);
 
   const totalMethodCount = summary ? Object.values(summary.byMethod).reduce((a, b) => a + b, 0) : 0;
   const methodPercentages = summary
@@ -99,7 +111,7 @@ export default function Reports() {
   const chartWidth = 100;
   const chartPoints = monthly.map((m, i) => {
     const x = monthly.length > 1 ? (i / (monthly.length - 1)) * chartWidth : 50;
-    const y = 100 - (m.total / maxMonthly) * 85 - 5; // 5% de padding arriba
+    const y = 100 - (m.total / maxMonthly) * 85 - 5;
     return { x, y };
   });
   const polylinePoints = chartPoints.map((p) => `${p.x},${p.y}`).join(' ');
@@ -113,14 +125,42 @@ export default function Reports() {
             Resumen financiero y operativo del gimnasio.
           </p>
         </div>
-        <button
-          onClick={() => { setHistoryInitialRange('today'); setHistoryModalOpen(true); }}
-          type="button"
-          className="flex items-center gap-2 px-4 py-2 bg-primary/20 border border-primary/30 text-primary rounded-md font-label-sm hover:bg-primary/30 transition-colors cursor-pointer"
-        >
-          <span className="material-symbols-outlined text-[18px]">calendar_today</span>
-          Historial de Transacciones
-        </button>
+        
+        {/* Selector de Rango de Fechas Mejorado */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+          <div className="flex items-center gap-2 px-3 py-2 bg-surface-container border border-outline-variant rounded-md">
+            <span className="material-symbols-outlined text-[18px] text-on-surface-variant">calendar_month</span>
+            <select
+              value={range}
+              onChange={(e) => setRange(e.target.value as any)}
+              className="bg-transparent text-on-surface font-label-sm focus:outline-none cursor-pointer [color-scheme:dark]"
+            >
+              <option value="today" className="bg-surface-container text-on-surface">Hoy</option>
+              <option value="week" className="bg-surface-container text-on-surface">Últimos 7 días</option>
+              <option value="month" className="bg-surface-container text-on-surface">Este Mes</option>
+              <option value="year" className="bg-surface-container text-on-surface">Este Año</option>
+              <option value="custom" className="bg-surface-container text-on-surface">Rango Personalizado</option>
+            </select>
+          </div>
+
+          {range === 'custom' && (
+            <div className="flex items-center gap-2">
+              <input 
+                type="date" 
+                value={customStart}
+                onChange={(e) => setCustomStart(e.target.value)}
+                className="bg-surface-container border border-outline-variant rounded-md px-2 py-1.5 text-on-surface text-sm focus:outline-none focus:border-primary [color-scheme:dark]"
+              />
+              <span className="text-on-surface-variant">-</span>
+              <input 
+                type="date" 
+                value={customEnd}
+                onChange={(e) => setCustomEnd(e.target.value)}
+                className="bg-surface-container border border-outline-variant rounded-md px-2 py-1.5 text-on-surface text-sm focus:outline-none focus:border-primary [color-scheme:dark]"
+              />
+            </div>
+          )}
+        </div>
       </div>
 
       {error && (
@@ -141,10 +181,16 @@ export default function Reports() {
             <span className="font-headline-md text-[22px] font-bold text-on-surface">
               {isLoading ? '—' : `Bs ${summary?.totalBs.toLocaleString('es-VE') ?? 0}`}
             </span>
-            <div className="text-[11px] text-on-surface-variant font-label-sm mt-2">
+
+
+
+            {/* <div className="text-[11px] text-on-surface-variant font-label-sm mt-2">
               <p>1 USD = {rate?.usdToBs ?? '—'} Bs</p>
               {rate?.eurToBs && <p>1 EUR = {rate.eurToBs} Bs</p>}
-            </div>
+            </div> */}
+
+
+            
           </div>
         </div>
 
@@ -187,7 +233,7 @@ export default function Reports() {
             </div>
           ) : transactions.length === 0 ? (
             <div className="flex items-center justify-center h-32 text-on-surface-variant text-body-sm">
-              Todavía no hay transacciones registradas.
+              Todavía no hay transacciones registradas en este período.
             </div>
           ) : (
             <table className="w-full text-left border-collapse">
@@ -242,23 +288,17 @@ export default function Reports() {
             </div>
           ) : (
             <div className="relative h-[240px] w-full pt-4">
-              {/* Eje Y */}
               <div className="absolute left-0 top-4 bottom-8 w-10 flex flex-col justify-between text-[10px] text-on-surface-variant text-right pr-2">
                 <span>${maxMonthly.toLocaleString('es-VE')}</span>
                 <span>${Math.round(maxMonthly / 2).toLocaleString('es-VE')}</span>
                 <span>$0</span>
               </div>
-
-              {/* Contenedor del Gráfico */}
               <div className="ml-10 h-[calc(100%-32px)] relative border-l border-b border-outline-variant/50">
-                {/* Grid lines */}
                 <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
                   <div className="border-t border-dashed border-outline-variant/20 w-full"></div>
                   <div className="border-t border-dashed border-outline-variant/20 w-full"></div>
                   <div className="border-t border-dashed border-outline-variant/20 w-full"></div>
                 </div>
-
-                {/* SVG */}
                 <svg className="absolute inset-0 w-full h-full overflow-visible pointer-events-none" preserveAspectRatio="none" viewBox="0 0 100 100">
                   <defs>
                     <linearGradient id="grad" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -269,8 +309,6 @@ export default function Reports() {
                   <polygon points={`0,100 ${polylinePoints} 100,100`} fill="url(#grad)" />
                   <polyline points={polylinePoints} fill="none" stroke="var(--color-primary)" strokeWidth="2" vectorEffect="non-scaling-stroke" strokeLinejoin="round" strokeLinecap="round" />
                 </svg>
-
-                {/* Puntos Interactivos */}
                 {chartPoints.map((p, i) => (
                   <div key={i} className="absolute group z-10" style={{ left: `${p.x}%`, top: `${p.y}%`, transform: 'translate(-50%, -50%)' }}>
                     <div className="w-4 h-4 rounded-full bg-surface border-2 border-primary cursor-pointer transition-transform group-hover:scale-150"></div>
@@ -281,8 +319,6 @@ export default function Reports() {
                   </div>
                 ))}
               </div>
-
-              {/* Eje X (Meses) */}
               <div className="ml-10 mt-2 relative h-4">
                 {monthly.map((m, i) => {
                   const x = monthly.length > 1 ? (i / (monthly.length - 1)) * 100 : 50;
@@ -378,7 +414,9 @@ export default function Reports() {
       <TransactionHistoryModal
         isOpen={historyModalOpen}
         onClose={() => { setHistoryModalOpen(false); setHistoryInitialRange(''); }}
-        initialRange={historyInitialRange}
+        initialRange={range}
+        initialCustomStart={customStart}
+        initialCustomEnd={customEnd}
       />
     </>
   );

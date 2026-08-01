@@ -313,9 +313,25 @@ export default function RenovationModal({ isOpen, onClose, onRenewed, member }: 
                 value={activeMember ? `${activeMember.fullName} (C.I: ${activeMember.cedula})` : 'Esperando búsqueda...'}
               />
             </div>
+            {/* NUEVO: Indicador visual de estado del plan */}
+            {activeMember && (
+              <div className="flex items-center gap-2 mt-1">
+                {member?.endDate && new Date(member.endDate) > new Date() ? (
+                  <span className="flex items-center gap-1 text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full border border-primary/20">
+                    <span className="material-symbols-outlined text-[14px]" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                    Plan Activo
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1 text-xs font-medium text-error bg-error/10 px-2 py-0.5 rounded-full border border-error/20">
+                    <span className="material-symbols-outlined text-[14px]">cancel</span>
+                    Sin Plan Activo
+                  </span>
+                )}
+              </div>
+            )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-gutter">
             <div className="flex flex-col space-y-2">
               <label className="font-label-md text-label-sm text-on-surface uppercase" htmlFor="plan">Seleccionar Plan</label>
               <div className="relative">
@@ -348,6 +364,21 @@ export default function RenovationModal({ isOpen, onClose, onRenewed, member }: 
                 />
               </div>
             </div>
+
+            <div className="flex flex-col space-y-2 opacity-70">
+              <label className="font-label-md text-label-sm text-on-surface-variant uppercase" htmlFor="fecha_vencimiento">Fecha de Vencimiento</label>
+              <div className="relative">
+                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">event_busy</span>
+                <input
+                  className="w-full bg-surface-container-low border border-outline-variant rounded-DEFAULT py-1.5 pl-10 pr-3 text-on-surface-variant focus:outline-none transition-colors font-body-md text-body-md cursor-default"
+                  id="fecha_vencimiento"
+                  readOnly
+                  type="text"
+                  value={endDatePreview || 'Elige un plan primero'}
+                />
+              </div>
+            </div>
+
           </div>
 
           <div className="space-y-3">
@@ -471,22 +502,6 @@ export default function RenovationModal({ isOpen, onClose, onRenewed, member }: 
             {!activeRate && !rateLoading && (
               <p className="text-error text-[12px] mt-1">No se pudo cargar la tasa. Los pagos en Bs no se calcularán bien.</p>
             )}
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-gutter">
-            <div className="flex flex-col space-y-2 opacity-70">
-              <label className="font-label-md text-label-sm text-on-surface-variant uppercase" htmlFor="fecha_vencimiento">Fecha de Vencimiento</label>
-              <div className="relative">
-                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">event_busy</span>
-                <input
-                  className="w-full bg-surface-container-low border border-outline-variant rounded-DEFAULT py-1.5 pl-10 pr-3 text-on-surface-variant focus:outline-none transition-colors font-body-md text-body-md cursor-default"
-                  id="fecha_vencimiento"
-                  readOnly
-                  type="text"
-                  value={endDatePreview || 'Elige un plan primero'}
-                />
-              </div>
-            </div>
           </div>
         </div>
 

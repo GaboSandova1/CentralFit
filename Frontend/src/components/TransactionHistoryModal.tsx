@@ -5,6 +5,8 @@ interface TransactionHistoryModalProps {
   isOpen: boolean;
   onClose: () => void;
   initialRange?: string;
+  initialCustomStart?: string;
+  initialCustomEnd?: string;
 }
 
 interface Transaction {
@@ -58,7 +60,7 @@ function downloadCsv(transactions: Transaction[]) {
   URL.revokeObjectURL(url);
 }
 
-export default function TransactionHistoryModal({ isOpen, onClose, initialRange }: TransactionHistoryModalProps) {
+export default function TransactionHistoryModal({ isOpen, onClose, initialRange, initialCustomStart, initialCustomEnd }: TransactionHistoryModalProps) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [plans, setPlans] = useState<Plan[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -67,12 +69,19 @@ export default function TransactionHistoryModal({ isOpen, onClose, initialRange 
   const [search, setSearch] = useState('');
   const [method, setMethod] = useState('');
   const [planId, setPlanId] = useState('');
-  const [range, setRange] = useState(initialRange ?? '');
+  const [range, setRange] = useState(initialRange ?? 'month');
+  const [customStart, setCustomStart] = useState(initialCustomStart ?? '');
+  const [customEnd, setCustomEnd] = useState(initialCustomEnd ?? '');
 
+  // Heredar filtros al abrir
   useEffect(() => {
-    if (isOpen) setRange(initialRange ?? '');
+    if (isOpen) {
+      setRange((initialRange as any) ?? 'month');
+      setCustomStart(initialCustomStart ?? '');
+      setCustomEnd(initialCustomEnd ?? '');
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, initialRange]);
+  }, [isOpen, initialRange, initialCustomStart, initialCustomEnd]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -93,8 +102,20 @@ export default function TransactionHistoryModal({ isOpen, onClose, initialRange 
         if (search) params.set('search', search);
         if (method) params.set('method', method);
         if (planId) params.set('planId', planId);
-        if (range) params.set('range', range);
-        params.set('limit', '100');
+
+        if (range === 'custom' && customStart && customEnd) {
+          params.set('startDate', customStart);
+          params.set('endDate', customEnd);
+        } else if (range !== 'custom') {
+          params.set('range', range);
+        } else {
+          // Es custom pero faltan fechas
+          setTransactions([]);
+          setIsLoading(false);
+          return;
+        }
+        
+        params.set('limit', '1000');
 
         const response = await apiFetch(`/reports/transactions?${params.toString()}`);
         if (!response.ok) throw new Error();
@@ -108,13 +129,13 @@ export default function TransactionHistoryModal({ isOpen, onClose, initialRange 
 
     const timeout = setTimeout(loadTransactions, 300);
     return () => clearTimeout(timeout);
-  }, [isOpen, search, method, planId, range]);
+  }, [isOpen, search, method, planId, range, customStart, customEnd]);
 
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-surface-container w-full max-w-5xl rounded-xl border border-outline-variant shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+      <div className="bg-surface-container w-full max-w-7xl rounded-xl border border-outline-variant shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
         {/* Modal Header */}
         <div className="px-5 py-4 border-b border-outline-variant flex justify-between items-center bg-surface-container-high shrink-0">
           <h3 className="text-lg font-headline-md text-on-surface">Historial de Transacciones</h3>
@@ -135,18 +156,39 @@ export default function TransactionHistoryModal({ isOpen, onClose, initialRange 
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
+          
           <select
-            className="bg-surface border border-outline-variant rounded-md px-3 py-1.5 text-body-sm text-on-surface focus:outline-none focus:border-primary"
+            className="bg-surface border border-outline-variant rounded-md px-3 py-1.5 text-body-sm text-on-surface focus:outline-none focus:border-primary [color-scheme:dark]"
             value={range}
-            onChange={(e) => setRange(e.target.value)}
+            onChange={(e) => setRange(e.target.value as any)}
           >
-            <option value="">Todo el tiempo</option>
+            <option value="month">Este mes</option>
             <option value="today">Hoy</option>
             <option value="week">Últimos 7 días</option>
-            <option value="month">Este mes</option>
+            <option value="year">Este Año</option>
+            <option value="custom">Rango Personalizado</option>
           </select>
+
+          {range === 'custom' && (
+            <div className="flex items-center gap-2">
+              <input
+                type="date"
+                value={customStart}
+                onChange={(e) => setCustomStart(e.target.value)}
+                className="bg-surface border border-outline-variant rounded-md px-3 py-1.5 text-body-sm text-on-surface focus:outline-none focus:border-primary [color-scheme:dark]"
+              />
+              <span className="text-on-surface-variant">-</span>
+              <input
+                type="date"
+                value={customEnd}
+                onChange={(e) => setCustomEnd(e.target.value)}
+                className="bg-surface border border-outline-variant rounded-md px-3 py-1.5 text-body-sm text-on-surface focus:outline-none focus:border-primary [color-scheme:dark]"
+              />
+            </div>
+          )}
+
           <select
-            className="bg-surface border border-outline-variant rounded-md px-3 py-1.5 text-body-sm text-on-surface focus:outline-none focus:border-primary"
+            className="bg-surface border border-outline-variant rounded-md px-3 py-1.5 text-body-sm text-on-surface focus:outline-none focus:border-primary [color-scheme:dark]"
             value={method}
             onChange={(e) => setMethod(e.target.value)}
           >
@@ -156,8 +198,9 @@ export default function TransactionHistoryModal({ isOpen, onClose, initialRange 
             <option value="Pago Móvil">Pago Móvil</option>
             <option value="Binance">Binance</option>
           </select>
+          
           <select
-            className="bg-surface border border-outline-variant rounded-md px-3 py-1.5 text-body-sm text-on-surface focus:outline-none focus:border-primary"
+            className="bg-surface border border-outline-variant rounded-md px-3 py-1.5 text-body-sm text-on-surface focus:outline-none focus:border-primary [color-scheme:dark]"
             value={planId}
             onChange={(e) => setPlanId(e.target.value)}
           >
@@ -166,6 +209,7 @@ export default function TransactionHistoryModal({ isOpen, onClose, initialRange 
               <option key={plan.id} value={plan.id}>{plan.name}</option>
             ))}
           </select>
+          
           <button
             onClick={() => downloadCsv(transactions)}
             disabled={transactions.length === 0}

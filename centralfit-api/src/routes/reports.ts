@@ -6,43 +6,59 @@ import { requireAuth, AuthRequest } from '../middleware/auth';
 const router = Router();
 router.use(requireAuth);
 
+// Ruta /summary actualizada
 router.get('/summary', async (req: AuthRequest, res) => {
   if (!req.gymId) return res.status(401).json({ error: 'No autorizado' });
 
-  console.log('1. Empezando consulta de reportes para gymId:', req.gymId);
+  const { range, startDate: qStart, endDate: qEnd } = req.query;
+  const dateFilter: any = {};
 
-  const now = new Date();
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  if (qStart && qEnd) {
+    // Rango personalizado
+    const start = new Date(qStart as string);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(qEnd as string);
+    end.setHours(23, 59, 59, 999);
+    dateFilter.gte = start;
+    dateFilter.lte = end;
+  } else {
+    // Rangos predefinidos
+    let start = new Date();
+    if (range === 'today') {
+      start.setHours(0, 0, 0, 0);
+    } else if (range === 'week') {
+      start.setDate(start.getDate() - 7);
+    } else if (range === 'year') {
+      start = new Date(new Date().getFullYear(), 0, 1);
+    } else {
+      // month (default)
+      start = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+    }
+    dateFilter.gte = start;
+  }
 
   const transactions = await prisma.transaction.findMany({
     where: {
-      createdAt: { gte: startOfMonth },
+      createdAt: dateFilter,
       subscription: { member: { gymId: req.gymId } },
     },
   });
 
-  console.log('2. Transacciones encontradas:', transactions.length);
-
   const totalUsd = transactions.reduce((sum, t) => sum + (t.amountUsd ? Number(t.amountUsd) : 0), 0);
   const totalBs = transactions.reduce((sum, t) => sum + (t.amountBs ? Number(t.amountBs) : 0), 0);
 
-  // Cuenta transacciones por método (no dólares) — refleja cuántas veces se usó cada uno
   const byMethod = transactions.reduce((acc, t) => {
     acc[t.method] = (acc[t.method] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
 
-  console.log('3. Totales calculados');
-
   const subscriptionsThisMonth = await prisma.subscription.findMany({
     where: {
-      startDate: { gte: startOfMonth },
+      startDate: dateFilter,
       member: { gymId: req.gymId },
     },
     include: { member: { include: { subscriptions: true } } },
   });
-
-  console.log('4. Suscripciones del mes encontradas:', subscriptionsThisMonth.length);
 
   const newMemberships = subscriptionsThisMonth.filter((s) => {
     const allSubsForMember = s.member.subscriptions;
@@ -52,19 +68,17 @@ router.get('/summary', async (req: AuthRequest, res) => {
     return earliestSub.id === s.id;
   }).length;
 
-  console.log('5. Nuevas membresías calculadas:', newMemberships);
-
   const renewals = subscriptionsThisMonth.length - newMemberships;
 
   res.json({ totalUsd, totalBs, byMethod, newMemberships, renewals });
 });
 
 
-// Lista de transacciones recientes (tabla "Resumen de Transacciones")
+// Ruta /transactions actualizada
 router.get('/transactions', async (req: AuthRequest, res) => {
   if (!req.gymId) return res.status(401).json({ error: 'No autorizado' });
 
-  const { method, planId, search, range, limit } = req.query;
+  const { method, planId, search, range, startDate: qStart, endDate: qEnd, limit } = req.query;
 
   const memberFilter: Record<string, unknown> = {};
   if (search && typeof search === 'string') {
@@ -87,20 +101,33 @@ router.get('/transactions', async (req: AuthRequest, res) => {
     where.method = method;
   }
 
-  if (range === 'today') {
+  const dateFilter: any = {};
+  if (qStart && qEnd) {
+    const start = new Date(qStart as string);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(qEnd as string);
+    end.setHours(23, 59, 59, 999);
+    dateFilter.gte = start;
+    dateFilter.lte = end;
+  } else if (range === 'today') {
     const start = new Date();
     start.setHours(0, 0, 0, 0);
-    where.createdAt = { gte: start };
+    dateFilter.gte = start;
   } else if (range === 'week') {
     const start = new Date();
     start.setDate(start.getDate() - 7);
-    where.createdAt = { gte: start };
-  } else if (range === 'month') {
+    dateFilter.gte = start;
+  } else if (range === 'year') {
+    const start = new Date(new Date().getFullYear(), 0, 1);
+    dateFilter.gte = start;
+  } else if (range === 'month' || !range) {
     const start = new Date();
     start.setDate(1);
     start.setHours(0, 0, 0, 0);
-    where.createdAt = { gte: start };
+    dateFilter.gte = start;
   }
+
+  where.createdAt = dateFilter;
 
   const transactions = await prisma.transaction.findMany({
     where,

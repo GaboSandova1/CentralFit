@@ -368,27 +368,33 @@ export default function Dashboard() {
               </div>
             )}
 
-            {/* Input de Foto Funcional */}
+            {/* Input de Foto Funcional y Estilizado */}
             <div className="flex flex-col gap-1.5 mb-2">
               <label className="font-label-sm text-label-sm text-on-surface-variant uppercase">Fotografía del Afiliado (Opcional)</label>
               <div className="flex items-center gap-3">
-                {form.photoUrl ? (
-                  <div className="relative w-12 h-12 rounded-full overflow-hidden border border-outline-variant">
+                <div className="relative w-14 h-14 shrink-0 rounded-full bg-surface-container-high border border-outline-variant overflow-hidden flex items-center justify-center">
+                  {form.photoUrl ? (
                     <img src={form.photoUrl} alt="Preview" className="w-full h-full object-cover" />
-                  </div>
-                ) : (
-                  <div className="w-12 h-12 rounded-full bg-surface-container-high border border-outline-variant flex items-center justify-center">
-                    <span className="material-symbols-outlined text-on-surface-variant text-[20px]">person</span>
-                  </div>
-                )}
-                <input
-                  type="file"
-                  accept="image/*"
-                  disabled={isUploading}
-                  onChange={handlePhotoChange}
-                  className="text-body-sm text-on-surface-variant file:mr-4 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-body-sm file:font-semibold file:bg-surface-container-high file:text-on-surface-variant cursor-pointer disabled:opacity-60"
-                />
-                {isUploading && <span className="material-symbols-outlined animate-spin text-primary text-[18px]">sync</span>}
+                  ) : (
+                    <span className="material-symbols-outlined text-on-surface-variant text-[24px]">person</span>
+                  )}
+                  {isUploading && (
+                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                      <span className="material-symbols-outlined animate-spin text-primary text-[18px]">sync</span>
+                    </div>
+                  )}
+                </div>
+                <label className={`flex items-center gap-2 px-3 py-2 border border-outline-variant rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors cursor-pointer text-sm ${isUploading ? 'opacity-60 pointer-events-none' : ''}`}>
+                  <span className="material-symbols-outlined text-[18px]">upload</span>
+                  {form.photoUrl ? 'Cambiar foto' : 'Subir foto'}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handlePhotoChange}
+                    disabled={isUploading}
+                  />
+                </label>
               </div>
             </div>
 
