@@ -98,6 +98,11 @@ export default function Reports() {
     loadData(range, customStart, customEnd);
   }, [range, customStart, customEnd]);
 
+  // Cálculos de equivalencia para la tarjeta de Bolívares
+  const totalBsNum = summary ? Number(summary.totalBs) : 0;
+  const usdEquiv = rate && totalBsNum > 0 ? (totalBsNum / Number(rate.usdToBs)).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00';
+  const eurEquiv = rate?.eurToBs && totalBsNum > 0 ? (totalBsNum / Number(rate.eurToBs)).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : null;
+
   const totalMethodCount = summary ? Object.values(summary.byMethod).reduce((a, b) => a + b, 0) : 0;
   const methodPercentages = summary
     ? Object.entries(summary.byMethod).map(([method, count]) => ({
@@ -181,16 +186,18 @@ export default function Reports() {
             <span className="font-headline-md text-[22px] font-bold text-on-surface">
               {isLoading ? '—' : `Bs ${summary?.totalBs.toLocaleString('es-VE') ?? 0}`}
             </span>
-
-
-
-            {/* <div className="text-[11px] text-on-surface-variant font-label-sm mt-2">
-              <p>1 USD = {rate?.usdToBs ?? '—'} Bs</p>
-              {rate?.eurToBs && <p>1 EUR = {rate.eurToBs} Bs</p>}
-            </div> */}
-
-
             
+            {/* NUEVO: Equivalentes calculados a partir del total en Bs */}
+            <div className="text-[11px] text-on-surface-variant font-label-sm mt-2">
+              {!isLoading && rate ? (
+                <>
+                  <p>Equivale a ${usdEquiv} USD</p>
+                  {eurEquiv && <p>Equivale a €{eurEquiv} EUR</p>}
+                </>
+              ) : (
+                <p>Calculando equivalentes...</p>
+              )}
+            </div>
           </div>
         </div>
 
