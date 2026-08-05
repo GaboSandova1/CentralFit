@@ -203,7 +203,7 @@ export default function Reports() {
 
         <div className="bg-surface-container rounded-xl border border-outline-variant p-4 flex flex-col justify-between">
           <div className="flex justify-between items-start mb-2">
-            <h3 className="font-label-sm text-[11px] text-on-surface-variant uppercase tracking-wider leading-tight">Ingresos Totales (Efectivo $)</h3>
+            <h3 className="font-label-sm text-[11px] text-on-surface-variant uppercase tracking-wider leading-tight">Ingresos Totales (Efectivo/$)</h3>
             <span className="material-symbols-outlined text-tertiary">local_atm</span>
           </div>
           <span className="font-headline-md text-headline-md text-on-surface">{isLoading ? '—' : `$${(summary?.totalUsd ?? 0).toLocaleString('es-VE')}`}</span>
