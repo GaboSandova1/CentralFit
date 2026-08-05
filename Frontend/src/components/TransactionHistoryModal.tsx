@@ -38,20 +38,22 @@ function downloadCsv(transactions: Transaction[]) {
   const header = ['Miembro', 'Cédula', 'Plan', 'Método', 'Fecha', 'Monto USD', 'Monto Bs', 'Referencia'];
   const rows = transactions.map((t) => [
     t.memberName,
-    t.memberCedula,
+    `\t${t.memberCedula}`, // El \t evita que Excel borre los ceros o ponga la E
     t.plan,
     t.method,
     new Date(t.createdAt).toLocaleString('es-VE'),
-    t.amountUsd ?? '',
-    t.amountBs ?? '',
-    t.reference ?? '',
+    t.amountUsd ? Number(t.amountUsd).toFixed(2) : '',
+    t.amountBs ? Number(t.amountBs).toFixed(2) : '',
+    t.reference ? `\t${t.reference}` : '',
   ]);
 
+  // Usamos punto y coma (;) que es el separador de Excel en español
   const csvContent = [header, ...rows]
-    .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(','))
-    .join('\n');
+    .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(';'))
+    .join('\r\n'); // Salto de línea de Windows para que Excel lo lea bien
 
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  // Agregamos el BOM (\uFEFF) al principio para que Excel entienda los acentos y la ñ
+  const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;

@@ -10,7 +10,53 @@ interface ExchangeRate {
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSettingsSaved?: () => void; // NUEVO
+  onSettingsSaved?: () => void;
+}
+
+// NUEVO: Interfaz para los miembros que vamos a exportar
+interface MemberCsv {
+  fullName: string;
+  cedula: string;
+  phone: string | null;
+  plan: string | null;
+  startDate: string | null;
+  endDate: string | null;
+  status: string;
+}
+
+// NUEVO: Función para descargar el CSV de miembros
+// Función para descargar el CSV de miembros
+function downloadMembersCsv(members: MemberCsv[]) {
+  const header = ['Nombre', 'Cédula', 'Teléfono', 'Plan', 'Fecha Inicio', 'Fecha Vencimiento', 'Estado'];
+  const statusLabels: Record<string, string> = {
+    sin_plan: 'Sin Plan',
+    activo: 'Activo',
+    por_vencer: 'Por Vencer',
+    en_gracia: 'En Gracia',
+    vencido: 'Vencido',
+  };
+
+  const rows = members.map((m) => [
+    m.fullName,
+    `\t${m.cedula}`, // El \t evita que Excel borre los ceros o ponga la E
+    m.phone ? `\t${m.phone}` : 'Sin teléfono',
+    m.plan ?? 'Sin plan',
+    m.startDate ? new Date(m.startDate).toLocaleDateString('es-VE') : '—',
+    m.endDate ? new Date(m.endDate).toLocaleDateString('es-VE') : '—',
+    statusLabels[m.status] || m.status,
+  ]);
+
+  const csvContent = [header, ...rows]
+    .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(';'))
+    .join('\r\n');
+
+  const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `miembros_centralift_${new Date().toISOString().slice(0, 10)}.csv`;
+  link.click();
+  URL.revokeObjectURL(url);
 }
 
 export default function SettingsModal({ isOpen, onClose, onSettingsSaved }: SettingsModalProps) {
@@ -19,6 +65,7 @@ export default function SettingsModal({ isOpen, onClose, onSettingsSaved }: Sett
   const [rate, setRate] = useState<ExchangeRate | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isExporting, setIsExporting] = useState(false); // NUEVO
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
@@ -67,16 +114,29 @@ export default function SettingsModal({ isOpen, onClose, onSettingsSaved }: Sett
         throw new Error(data.error || 'No se pudo guardar la configuración');
       }
 
-      onSettingsSaved?.(); // <--- AÑADE ESTO
-      setSuccess(true);
-      setTimeout(() => setSuccess(false), 2500);
-
+      onSettingsSaved?.();
       setSuccess(true);
       setTimeout(() => setSuccess(false), 2500);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo guardar la configuración');
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  // NUEVO: Función para exportar miembros
+  const handleExportMembers = async () => {
+    setIsExporting(true);
+    setError(null);
+    try {
+      const res = await apiFetch('/members');
+      if (!res.ok) throw new Error();
+      const members = await res.json();
+      downloadMembersCsv(members);
+    } catch {
+      setError('No se pudieron exportar los miembros.');
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -192,6 +252,36 @@ export default function SettingsModal({ isOpen, onClose, onSettingsSaved }: Sett
           </section>
 
           <hr className="border-t border-outline-variant" />
+
+          {/* NUEVO: Sección de Seguridad y Respaldo */}
+          <section className="flex flex-col gap-card-gap">
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-secondary" style={{ fontVariationSettings: "'FILL' 1" }}>admin_panel_settings</span>
+              <h3 className="font-label-md text-label-md text-on-surface uppercase tracking-wider">Seguridad y Respaldo</h3>
+            </div>
+            <div className="bg-surface border border-outline-variant rounded-lg flex flex-col overflow-hidden">
+              <div className="flex items-center justify-between p-card-gap hover:bg-surface-container transition-colors">
+                <div className="flex flex-col pr-4">
+                  <span className="font-label-md text-label-md text-on-surface mb-1">Exportar lista de miembros</span>
+                  <span className="font-body-sm text-body-sm text-on-surface-variant">Descarga un archivo Excel/CSV con todos los datos de tus clientes para tener un respaldo seguro.</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleExportMembers}
+                  disabled={isExporting}
+                  className="flex items-center gap-2 px-4 py-2 bg-primary/20 border border-primary/30 text-primary rounded-lg font-label-md text-label-md hover:bg-primary/30 transition-colors cursor-pointer disabled:opacity-60 shrink-0"
+                >
+                  {isExporting ? (
+                    <span className="material-symbols-outlined animate-spin text-[18px]">sync</span>
+                  ) : (
+                    <span className="material-symbols-outlined text-[18px]">download</span>
+                  )}
+                  {isExporting ? 'Exportando...' : 'Exportar CSV'}
+                </button>
+              </div>
+            </div>
+          </section>
+
         </div>
 
         <div className="px-container-padding py-3 border-t border-outline-variant bg-surface-container flex justify-end gap-3 shrink-0">
