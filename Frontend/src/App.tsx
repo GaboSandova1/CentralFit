@@ -10,6 +10,7 @@ import Layout from './components/Layout';
 import SuperAdmin from './views/SuperAdmin';
 import SuperAdminLogin from './views/SuperAdminLogin';
 import Splash from './views/Splash';
+import NotFound from './views/NotFound';
 
 // Wrappers para adaptar las props a useNavigate
 const LoginWrapper = () => {
@@ -78,8 +79,8 @@ export default function App() {
           <Route path="/reports" element={<Reports />} />
         </Route>
 
-        {/* Si la URL no existe, lo mandamos al inicio */}
-        <Route path="*" element={<Navigate to={getInitialRoute()} replace />} />
+        {/* Si la URL no existe, mostramos el 404 */}
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
   );
