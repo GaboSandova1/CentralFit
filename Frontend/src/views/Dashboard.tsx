@@ -43,6 +43,7 @@ export default function Dashboard() {
   const [formSuccess, setFormSuccess] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [gymName, setGymName] = useState('CentralFit'); // NUEVO
 
   const [form, setForm] = useState({
     fullName: '',
@@ -59,13 +60,20 @@ export default function Dashboard() {
     setIsLoading(true);
     setError(null);
     try {
-      const [membersRes, plansRes] = await Promise.all([
+      const [membersRes, plansRes, meRes] = await Promise.all([
         apiFetch('/members'),
         apiFetch('/plans'),
+        apiFetch('/auth/me') // NUEVO: Traemos el nombre del gimnasio
       ]);
       if (!membersRes.ok || !plansRes.ok) throw new Error();
       setMembers(await membersRes.json());
       setPlans(await plansRes.json());
+      
+      // NUEVO: Guardamos el nombre del gimnasio
+      if (meRes.ok) {
+        const meData = await meRes.json();
+        if (meData.gym?.name) setGymName(meData.gym.name);
+      }
     } catch {
       setError('No se pudieron cargar los datos del dashboard.');
     } finally {
@@ -182,8 +190,14 @@ export default function Dashboard() {
   const handleSendWhatsApp = (member: Member) => {
     if (!member.phone) return;
     const formattedPhone = member.phone.startsWith('0') ? `58${member.phone.substring(1)}` : `58${member.phone}`;
-    const endDate = member.endDate ? new Date(member.endDate).toLocaleDateString('es-VE') : 'pronto';
-    const text = `Hola ${member.fullName}, te recordamos que tu plan de CentralFit vence el ${endDate}. ¡Te esperamos para renovarlo!`;
+    
+    // Formateamos la fecha para que se vea bonita (ej: lunes, 5 de agosto de 2024)
+    const endDate = member.endDate 
+      ? new Date(member.endDate).toLocaleDateString('es-VE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+      : 'pronto';
+    
+    const text = `Buen día, estimad@ ${member.fullName}, les escribe el equipo de ${gymName}. Queremos comunicarle por este medio que se aproxima su fecha de pago, el día ${endDate}. Le esperamos en nuestra recepción para mantenerle al día y seguir con sus entrenamientos, y así seguir disfrutando de nuestras instalaciones. \n\nLe deseamos un excelente día`;
+    
     window.open(`https://wa.me/${formattedPhone}?text=${encodeURIComponent(text)}`, '_blank');
   };
 
