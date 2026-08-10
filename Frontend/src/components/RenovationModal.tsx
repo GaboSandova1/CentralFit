@@ -31,6 +31,9 @@ interface SearchedMember {
   id: string;
   fullName: string;
   cedula: string;
+  plan?: string | null;
+  planId?: string | null;
+  endDate?: string | null;
 }
 
 interface PaymentEntry {
@@ -47,7 +50,8 @@ function formatDMY(date: Date): string {
   return `${d}-${m}-${y}`;
 }
 
-const isBsMethod = (method: string) => method !== 'Efectivo' && method !== 'Zelle';
+// NUEVO: Binance se trata como USD
+const isBsMethod = (method: string) => method !== 'Efectivo' && method !== 'Zelle' && method !== 'Binance';
 
 export default function RenovationModal({ isOpen, onClose, onRenewed, member }: RenovationModalProps) {
   const [plans, setPlans] = useState<Plan[]>([]);
@@ -182,7 +186,14 @@ export default function RenovationModal({ isOpen, onClose, onRenewed, member }: 
         setSearchedMember(null);
         return;
       }
-      setSearchedMember({ id: exactMatch.id, fullName: exactMatch.fullName, cedula: exactMatch.cedula });
+      setSearchedMember({ 
+        id: exactMatch.id, 
+        fullName: exactMatch.fullName, 
+        cedula: exactMatch.cedula,
+        plan: exactMatch.plan,
+        planId: exactMatch.planId,
+        endDate: exactMatch.endDate
+      });
     } catch {
       setSearchError('No se pudo buscar el miembro.');
     } finally {
@@ -316,7 +327,7 @@ export default function RenovationModal({ isOpen, onClose, onRenewed, member }: 
             {/* NUEVO: Indicador visual de estado del plan */}
             {activeMember && (
               <div className="flex items-center gap-2 mt-1">
-                {member?.endDate && new Date(member.endDate) > new Date() ? (
+                {activeMember.endDate && new Date(activeMember.endDate) > new Date() ? (
                   <span className="flex items-center gap-1 text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full border border-primary/20">
                     <span className="material-symbols-outlined text-[14px]" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
                     Plan Activo
@@ -421,8 +432,8 @@ export default function RenovationModal({ isOpen, onClose, onRenewed, member }: 
                       >
                         <option value="Efectivo">Efectivo (USD)</option>
                         <option value="Zelle">Zelle (USD)</option>
+                        <option value="Binance">Binance (USD)</option>
                         <option value="Pago Móvil">Pago Móvil (Bs)</option>
-                        <option value="Binance">Binance (Bs)</option>
                       </select>
                     </div>
 

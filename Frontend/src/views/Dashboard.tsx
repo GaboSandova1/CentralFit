@@ -20,7 +20,7 @@ interface Plan {
   name: string;
   durationDays: number;
   priceUsd: string;
-  priceBs: string;
+  priceUsdBs?: string | null;
 }
 
 function daysUntil(dateStr: string | null): string {
@@ -42,7 +42,8 @@ export default function Dashboard() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formSuccess, setFormSuccess] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [formErrors, setFormErrors] = useState<Record<string, string>>({}); // NUEVO
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [gymName, setGymName] = useState('CentralFit'); // NUEVO
 
   const [form, setForm] = useState({
     fullName: '',
@@ -59,13 +60,20 @@ export default function Dashboard() {
     setIsLoading(true);
     setError(null);
     try {
-      const [membersRes, plansRes] = await Promise.all([
+      const [membersRes, plansRes, meRes] = await Promise.all([
         apiFetch('/members'),
         apiFetch('/plans'),
+        apiFetch('/auth/me') // NUEVO: Traemos el nombre del gimnasio
       ]);
       if (!membersRes.ok || !plansRes.ok) throw new Error();
       setMembers(await membersRes.json());
       setPlans(await plansRes.json());
+      
+      // NUEVO: Guardamos el nombre del gimnasio
+      if (meRes.ok) {
+        const meData = await meRes.json();
+        if (meData.gym?.name) setGymName(meData.gym.name);
+      }
     } catch {
       setError('No se pudieron cargar los datos del dashboard.');
     } finally {
@@ -110,16 +118,12 @@ export default function Dashboard() {
     }
   };
 
-  // NUEVA VALIDACIÓN
-    const validateForm = (): Record<string, string> => {
+  const validateForm = (): Record<string, string> => {
     const errors: Record<string, string> = {};
     if (!form.fullName.trim()) errors.fullName = 'El nombre es requerido';
     if (!/^\d{7,8}$/.test(form.cedula)) errors.cedula = 'Cédula inválida (7-8 números)';
-    
-    // AQUÍ ESTÁ EL CAMBIO: Ahora validamos que exista y tenga 11 números
     if (!form.phone.trim()) errors.phone = 'El teléfono es requerido';
     else if (!/^\d{11}$/.test(form.phone)) errors.phone = 'Debe tener 11 números';
-
     if (form.planId && !form.method) errors.method = 'Selecciona un método';
     if (form.planId && form.method !== 'Efectivo' && !form.reference.trim()) {
       errors.reference = 'La referencia es requerida';
@@ -134,7 +138,7 @@ export default function Dashboard() {
       setFormErrors(errors);
       return;
     }
-    setFormErrors({}); // Limpiar errores
+    setFormErrors({});
 
     setIsSubmitting(true);
     setError(null);
@@ -181,6 +185,24 @@ export default function Dashboard() {
       setIsSubmitting(false);
     }
   };
+
+  // NUEVO: Función para abrir WhatsApp con el mensaje de recordatorio
+  const handleSendWhatsApp = (member: Member) => {
+    if (!member.phone) return;
+    const formattedPhone = member.phone.startsWith('0') ? `58${member.phone.substring(1)}` : `58${member.phone}`;
+    
+    // Formateamos la fecha para que se vea bonita (ej: lunes, 5 de agosto de 2024)
+    const endDate = member.endDate 
+      ? new Date(member.endDate).toLocaleDateString('es-VE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+      : 'pronto';
+    
+    const text = `Buen día, estimad@ ${member.fullName}, les escribe el equipo de ${gymName}. Queremos comunicarle por este medio que se aproxima su fecha de pago, el día ${endDate}. Le esperamos en nuestra recepción para mantenerle al día y seguir con sus entrenamientos, y así seguir disfrutando de nuestras instalaciones. \n\nLe deseamos un excelente día`;
+    
+    window.open(`https://wa.me/${formattedPhone}?text=${encodeURIComponent(text)}`, '_blank');
+  };
+
+  // NUEVO: Calcular el precio del plan seleccionado para mostrarlo
+  const selectedPlanData = plans.find(p => p.id === form.planId);
 
   return (
     <>
@@ -324,6 +346,12 @@ export default function Dashboard() {
                     <option key={plan.id} value={plan.id}>{plan.name}</option>
                   ))}
                 </select>
+                {/* NUEVO: Mostrar precio del plan seleccionado */}
+                {selectedPlanData && (
+                  <p className="text-[11px] text-on-surface-variant mt-1">
+                    Precio: <span className="text-primary font-semibold">${selectedPlanData.priceUsd} USD</span>
+                  </p>
+                )}
               </div>
               <div className="flex flex-col gap-1">
                 <label className="font-label-sm text-label-sm text-on-surface-variant uppercase">Fecha de Inicio</label>
@@ -481,12 +509,15 @@ export default function Dashboard() {
                         <td className="p-3">
                           <button
                             onClick={() => {
-                              if (!isOverdue) return;
-                              setSelectedMember(member);
-                              setRenovationModalOpen(true);
+                              if (isOverdue) {
+                                setSelectedMember(member);
+                                setRenovationModalOpen(true);
+                              } else {
+                                handleSendWhatsApp(member); // NUEVO: Abrir WhatsApp si es "Por Vencer"
+                              }
                             }}
                             className={`flex items-center gap-1 font-label-sm transition-colors text-[14px] ${
-                              isOverdue ? 'text-on-surface-variant hover:text-on-surface cursor-pointer' : 'text-on-surface-variant/50 cursor-not-allowed'
+                              isOverdue ? 'text-on-surface-variant hover:text-on-surface cursor-pointer' : 'text-primary hover:text-primary-fixed cursor-pointer'
                             }`}
                             type="button"
                           >

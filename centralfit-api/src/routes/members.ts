@@ -223,12 +223,28 @@ router.get('/search', async (req: AuthRequest, res) => {
         { cedula: { contains: q } },
       ],
     },
+    include: {
+      subscriptions: { orderBy: { endDate: 'desc' }, take: 1, include: { plan: true } },
+    },
     take: 10,
   });
 
-  res.json(members);
-});
+  // NUEVO: Mapeamos para devolver la info del plan y fechas, igual que en el GET /
+  const result = members.map((member) => {
+    const latestSub = member.subscriptions[0];
+    return {
+      id: member.id,
+      fullName: member.fullName,
+      cedula: member.cedula,
+      plan: latestSub?.plan.name ?? null,
+      planId: latestSub?.planId ?? null,
+      startDate: latestSub?.startDate ?? null,
+      endDate: latestSub?.endDate ?? null,
+    };
+  });
 
+  res.json(result);
+});
 
 // Renovar/registrar el pago de un miembro (crea Subscription + Transaction juntos)
 router.post('/:id/renew', async (req: AuthRequest, res) => {
@@ -266,14 +282,17 @@ router.post('/:id/renew', async (req: AuthRequest, res) => {
   }
   const activeRate = rateType === 'Euro' && rate.eurToBs ? rate.eurToBs : rate.usdToBs;
 
+  // NUEVO: Binance ahora se trata como USD (junto con Efectivo y Zelle)
+  const isUsdMethod = (method: string) => method === 'Efectivo' || method === 'Zelle' || method === 'Binance';
+
   // Determinar precio objetivo del plan
-  const hasBs = payments.some(p => p.method !== 'Efectivo' && p.method !== 'Zelle');
+  const hasBs = payments.some(p => !isUsdMethod(p.method));
   const planPriceUsd = hasBs 
     ? (plan.priceUsdBs ? Number(plan.priceUsdBs) : Number(plan.priceUsd)) 
     : Number(plan.priceUsd);
 
   const resolvedPayments = payments.map((p: { method: string; amount?: number; reference?: string }) => {
-    const isBs = p.method !== 'Efectivo' && p.method !== 'Zelle';
+    const isBs = !isUsdMethod(p.method);
     let amount = p.amount;
     if (amount === undefined) {
       amount = payments.length === 1 ? (isBs ? planPriceUsd * activeRate : planPriceUsd) : 0;
