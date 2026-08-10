@@ -16,6 +16,9 @@ interface Member {
   planId?: string | null;
   endDate: string | null;
   status: 'sin_plan' | 'activo' | 'por_vencer' | 'en_gracia' | 'vencido';
+  initialWeight?: string | null; // <--- AGREGAR
+  currentWeight?: string | null; // <--- AGREGAR
+  birthDate?: string | null; // <--- AGREGAR
 }
 
 const STATUS_LABELS: Record<Member['status'], string> = {
@@ -309,7 +312,10 @@ export default function Members() {
           fullName: selectedMember.fullName, 
           cedula: selectedMember.cedula, 
           phone: selectedMember.phone ?? '', 
-          photoUrl: selectedMember.photoUrl 
+          photoUrl: selectedMember.photoUrl,
+          initialWeight: selectedMember.initialWeight,
+          currentWeight: selectedMember.currentWeight,
+          birthDate: selectedMember.birthDate // <--- AGREGAR ESTO
         } : undefined}
       />
       

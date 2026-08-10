@@ -48,6 +48,7 @@ router.get('/', async (req: AuthRequest, res) => {
       photoUrl: member.photoUrl,
       initialWeight: member.initialWeight, // <--- AGREGAR
       currentWeight: member.currentWeight, // <--- AGREGAR
+      birthDate: member.birthDate,
       plan: latestSub?.plan.name ?? null,
       planId: latestSub?.planId ?? null,
       startDate: latestSub?.startDate ?? null,
@@ -162,6 +163,7 @@ router.get('/search', async (req: AuthRequest, res) => {
       cedula: member.cedula,
       initialWeight: member.initialWeight, // <--- AGREGAR
       currentWeight: member.currentWeight, // <--- AGREGAR
+      birthDate: member.birthDate,
       plan: latestSub?.plan.name ?? null,
       planId: latestSub?.planId ?? null,
       startDate: latestSub?.startDate ?? null,
@@ -278,12 +280,12 @@ router.patch('/:id', async (req: AuthRequest, res) => {
   });
   if (!existing) return res.status(404).json({ error: 'Miembro no encontrado' });
 
-  const { fullName, cedula, phone, photoUrl, initialWeight, currentWeight } = req.body;
+  const { fullName, cedula, phone, photoUrl, initialWeight, currentWeight, birthDate } = req.body;
 
   try {
     const member = await prisma.member.update({
       where: { id },
-      data: { fullName, cedula, phone, photoUrl, initialWeight, currentWeight }, // <--- AGREGAR AQUÍ
+      data: { fullName, cedula, phone, photoUrl, initialWeight, currentWeight, birthDate: birthDate ? new Date(birthDate) : null }, // <--- AGREGAR AQUÍ
     });
     res.json(member);
   } catch (err: any) {

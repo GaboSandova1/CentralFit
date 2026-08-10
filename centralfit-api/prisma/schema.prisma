@@ -25,6 +25,7 @@ model Gym {
   members  Member[]
   plans    Plan[]
   settings GymSettings?
+  attendances Attendance[] // <--- AGREGAR ESTO
 }
 
 model User {
@@ -49,10 +50,12 @@ model Member {
   phone     String?
   initialWeight String? // <--- NUEVO
   currentWeight String? // <--- NUEVO
+  birthDate    DateTime? // <--- AGREGAR ESTO
   photoUrl  String?
   createdAt DateTime @default(now())
 
   subscriptions Subscription[]
+  attendances Attendance[] // <--- AGREGAR ESTO
 
   @@unique([gymId, cedula])
   @@index([gymId])
@@ -116,4 +119,16 @@ model GymSettings {
   gym       Gym    @relation(fields: [gymId], references: [id])
   graceDays Int    @default(3)
   rateType  String @default("BCV") // <--- NUEVO: BCV o Euro
+}
+
+model Attendance {
+  id        String   @id @default(uuid())
+  gymId     String
+  gym       Gym      @relation(fields: [gymId], references: [id])
+  memberId  String
+  member    Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([gymId])
+  @@index([createdAt])
 }

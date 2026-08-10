@@ -11,6 +11,7 @@ import SuperAdmin from './views/SuperAdmin';
 import SuperAdminLogin from './views/SuperAdminLogin';
 import Splash from './views/Splash';
 import NotFound from './views/NotFound';
+import Attendance from './views/Attendance';
 
 // Wrappers para adaptar las props a useNavigate
 const LoginWrapper = () => {
@@ -77,6 +78,7 @@ export default function App() {
           <Route path="/members" element={<Members />} />
           <Route path="/plans" element={<Plans />} />
           <Route path="/reports" element={<Reports />} />
+          <Route path="/attendance" element={<Attendance />} /> {/* NUEVO */}
         </Route>
 
         {/* Si la URL no existe, mostramos el 404 */}
