@@ -47,6 +47,8 @@ model Member {
   fullName  String
   cedula    String
   phone     String?
+  initialWeight String? // <--- NUEVO
+  currentWeight String? // <--- NUEVO
   photoUrl  String?
   createdAt DateTime @default(now())
 

@@ -43,7 +43,8 @@ export default function Dashboard() {
   const [formSuccess, setFormSuccess] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
-  const [gymName, setGymName] = useState('CentralFit'); // NUEVO
+  const [gymName, setGymName] = useState('CentralFit');
+  const [activeRate, setActiveRate] = useState<number | null>(null); // NUEVO
 
   const [form, setForm] = useState({
     fullName: '',
@@ -60,19 +61,28 @@ export default function Dashboard() {
     setIsLoading(true);
     setError(null);
     try {
-      const [membersRes, plansRes, meRes] = await Promise.all([
+      const [membersRes, plansRes, meRes, settingsRes, rateRes] = await Promise.all([
         apiFetch('/members'),
         apiFetch('/plans'),
-        apiFetch('/auth/me') // NUEVO: Traemos el nombre del gimnasio
+        apiFetch('/auth/me'),
+        apiFetch('/settings'),
+        apiFetch('/exchange-rate')
       ]);
       if (!membersRes.ok || !plansRes.ok) throw new Error();
       setMembers(await membersRes.json());
       setPlans(await plansRes.json());
       
-      // NUEVO: Guardamos el nombre del gimnasio
       if (meRes.ok) {
         const meData = await meRes.json();
         if (meData.gym?.name) setGymName(meData.gym.name);
+      }
+
+      // NUEVO: Calcular tasa activa (BCV o Euro)
+      if (settingsRes.ok && rateRes.ok) {
+        const s = await settingsRes.json();
+        const r = await rateRes.json();
+        const isEuro = s.rateType === 'Euro' && r.eurToBs;
+        setActiveRate(isEuro ? Number(r.eurToBs) : Number(r.usdToBs));
       }
     } catch {
       setError('No se pudieron cargar los datos del dashboard.');
@@ -186,12 +196,10 @@ export default function Dashboard() {
     }
   };
 
-  // NUEVO: Función para abrir WhatsApp con el mensaje de recordatorio
   const handleSendWhatsApp = (member: Member) => {
     if (!member.phone) return;
     const formattedPhone = member.phone.startsWith('0') ? `58${member.phone.substring(1)}` : `58${member.phone}`;
     
-    // Formateamos la fecha para que se vea bonita (ej: lunes, 5 de agosto de 2024)
     const endDate = member.endDate 
       ? new Date(member.endDate).toLocaleDateString('es-VE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
       : 'pronto';
@@ -201,8 +209,16 @@ export default function Dashboard() {
     window.open(`https://wa.me/${formattedPhone}?text=${encodeURIComponent(text)}`, '_blank');
   };
 
-  // NUEVO: Calcular el precio del plan seleccionado para mostrarlo
+  // NUEVO: Calcular si el método seleccionado es en Bs
+  const isBsMethod = (method: string) => method !== 'Efectivo' && method !== 'Zelle' && method !== 'Binance';
+  
   const selectedPlanData = plans.find(p => p.id === form.planId);
+  
+  // NUEVO: Precio a mostrar dependiendo del método
+  const planPriceUsd = selectedPlanData 
+    ? (isBsMethod(form.method) && selectedPlanData.priceUsdBs ? Number(selectedPlanData.priceUsdBs) : Number(selectedPlanData.priceUsd))
+    : 0;
+  const planPriceBs = activeRate ? planPriceUsd * activeRate : 0;
 
   return (
     <>
@@ -346,10 +362,11 @@ export default function Dashboard() {
                     <option key={plan.id} value={plan.id}>{plan.name}</option>
                   ))}
                 </select>
-                {/* NUEVO: Mostrar precio del plan seleccionado */}
+                {/* NUEVO: Precio dinámico dependiendo del método */}
                 {selectedPlanData && (
-                  <p className="text-[11px] text-on-surface-variant mt-1">
-                    Precio: <span className="text-primary font-semibold">${selectedPlanData.priceUsd} USD</span>
+                  <p className="text-[11px] text-on-surface-variant mt-1 whitespace-nowrap">
+                    Precio: <span className="text-primary font-semibold">${planPriceUsd.toFixed(2)} USD</span>
+                    {isBsMethod(form.method) && activeRate && <span> (≈ Bs. {planPriceBs.toFixed(2)})</span>}
                   </p>
                 )}
               </div>
@@ -513,7 +530,7 @@ export default function Dashboard() {
                                 setSelectedMember(member);
                                 setRenovationModalOpen(true);
                               } else {
-                                handleSendWhatsApp(member); // NUEVO: Abrir WhatsApp si es "Por Vencer"
+                                handleSendWhatsApp(member); 
                               }
                             }}
                             className={`flex items-center gap-1 font-label-sm transition-colors text-[14px] ${
