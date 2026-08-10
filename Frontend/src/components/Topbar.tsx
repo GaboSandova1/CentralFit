@@ -6,9 +6,11 @@ interface Member {
   id: string;
   fullName: string;
   cedula: string;
+  phone: string | null; // NUEVO: Necesario para WhatsApp
   plan: string | null;
   endDate: string | null;
   status: 'sin_plan' | 'activo' | 'por_vencer' | 'en_gracia' | 'vencido';
+  birthDate?: string | null; // NUEVO: Para saber si cumple años
 }
 
 interface TopbarProps {
@@ -21,9 +23,11 @@ interface TopbarProps {
 export default function Topbar({ onMenuClick, onOpenProfile, refreshTrigger, onNotificationClick }: TopbarProps) {
   const [rateLabel, setRateLabel] = useState<string | null>(null);
   const [attentionList, setAttentionList] = useState<Member[]>([]);
+  const [birthdayList, setBirthdayList] = useState<Member[]>([]); // NUEVO
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [profilePic, setProfilePic] = useState<string | null>(null);
-  const [paymentModalOpen, setPaymentModalOpen] = useState(false); // NUEVO
+  const [gymName, setGymName] = useState('CentralFit'); // NUEVO
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
 
   const fetchTopbarData = useCallback(() => {
     Promise.all([
@@ -36,14 +40,28 @@ export default function Topbar({ onMenuClick, onOpenProfile, refreshTrigger, onN
       const symbol = isEuro ? '€1' : '$1';
       setRateLabel(`${symbol} = ${rateValue.toFixed(2)} Bs`);
       if (userData?.photoUrl) setProfilePic(userData.photoUrl);
+      if (userData?.gym?.name) setGymName(userData.gym.name); // NUEVO
     }).catch(() => setRateLabel(null));
 
     apiFetch('/members')
       .then((res) => res.json())
       .then((members: Member[]) => {
         setAttentionList(members.filter((m) => ['por_vencer', 'vencido', 'en_gracia'].includes(m.status)));
+        
+        // NUEVO: Filtrar quienes cumplen años hoy
+        const today = new Date();
+        const todayMonth = today.getMonth();
+        const todayDate = today.getDate();
+        setBirthdayList(members.filter(m => {
+          if (!m.birthDate) return false;
+          const birthDateObj = new Date(m.birthDate);
+          return birthDateObj.getMonth() === todayMonth && birthDateObj.getDate() === todayDate;
+        }));
       })
-      .catch(() => setAttentionList([]));
+      .catch(() => {
+        setAttentionList([]);
+        setBirthdayList([]);
+      });
   }, []);
 
   useEffect(() => {
@@ -61,6 +79,17 @@ export default function Topbar({ onMenuClick, onOpenProfile, refreshTrigger, onN
     setNotificationsOpen(false);
   };
 
+  // NUEVO: Enviar WhatsApp de cumpleaños
+  const handleBirthdayClick = (member: Member) => {
+    if (!member.phone) return;
+    const formattedPhone = member.phone.startsWith('0') ? `58${member.phone.substring(1)}` : `58${member.phone}`;
+    const text = `¡Feliz Cumpleaños, ${member.fullName}! Te deseamos un día increíble y un año lleno de éxitos. ¡Te esperamos en el gym para celebrar! - Equipo de ${gymName}`;
+    window.open(`https://wa.me/${formattedPhone}?text=${encodeURIComponent(text)}`, '_blank');
+    setNotificationsOpen(false);
+  };
+
+  const totalNotifications = attentionList.length + birthdayList.length;
+
   return (
     <>
       <header className="h-topbar-height fixed top-0 right-0 left-0 md:left-sidebar-width z-20 bg-surface dark:bg-surface border-b border-outline-variant dark:border-outline-variant flex justify-between items-center px-gutter w-full md:w-[calc(100%-var(--spacing-sidebar-width))]">
@@ -76,7 +105,7 @@ export default function Topbar({ onMenuClick, onOpenProfile, refreshTrigger, onN
             {rateLabel ? rateLabel : 'Cargando tasa...'}
           </div>
 
-          {/* NUEVO: Botón de Pago de Suscripción */}
+          {/* Botón de Pago de Suscripción */}
           <button 
             onClick={() => setPaymentModalOpen(true)} 
             className="hidden sm:flex items-center gap-1 text-primary border border-primary/50 rounded-full px-3 py-1.5 hover:bg-primary/10 transition-colors text-sm cursor-pointer"
@@ -91,9 +120,9 @@ export default function Topbar({ onMenuClick, onOpenProfile, refreshTrigger, onN
           <div className="relative">
             <button onClick={() => setNotificationsOpen((prev) => !prev)} className="text-on-surface-variant hover:text-primary transition-colors relative cursor-pointer" type="button">
               <span className="material-symbols-outlined">notifications</span>
-              {attentionList.length > 0 && (
+              {totalNotifications > 0 && (
                 <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 bg-error rounded-full text-[10px] text-on-error flex items-center justify-center font-bold">
-                  {attentionList.length > 9 ? '9+' : attentionList.length}
+                  {totalNotifications > 9 ? '9+' : totalNotifications}
                 </span>
               )}
             </button>
@@ -102,30 +131,63 @@ export default function Topbar({ onMenuClick, onOpenProfile, refreshTrigger, onN
               <>
                 <div className="fixed inset-0 z-30" onClick={() => setNotificationsOpen(false)}></div>
                 <div className="absolute right-0 top-full mt-2 w-72 bg-surface-container border border-outline-variant rounded-lg shadow-xl z-40 overflow-hidden">
-                  <div className="px-4 py-2.5 border-b border-outline-variant bg-surface-container-high">
-                    <p className="font-label-sm text-label-sm text-on-surface uppercase tracking-wider">Requiere Atención</p>
-                  </div>
-                  <div className="max-h-72 overflow-y-auto">
-                    {attentionList.length === 0 ? (
-                      <p className="px-4 py-6 text-center text-on-surface-variant text-body-sm">No hay alertas por ahora.</p>
-                    ) : (
-                      attentionList.map((m) => {
-                        const isOverdue = m.status === 'vencido' || m.status === 'en_gracia';
-                        return (
-                          <button key={m.id} onClick={() => handleNotificationClick(m)} className="w-full px-4 py-2.5 border-b border-outline-variant/50 flex items-center gap-2 hover:bg-surface-container-high/50 transition-colors text-left cursor-pointer" type="button">
-                            <span className={`material-symbols-outlined text-[18px] ${isOverdue ? 'text-error' : 'text-tertiary'}`}>{isOverdue ? 'error' : 'warning'}</span>
+                  
+                  {/* Sección Cumpleaños */}
+                  {birthdayList.length > 0 && (
+                    <>
+                      <div className="px-4 py-2.5 border-b border-outline-variant bg-secondary-container/30">
+                        <p className="font-label-sm text-label-sm text-secondary uppercase tracking-wider flex items-center gap-1">
+                          <span className="material-symbols-outlined text-[16px]">cake</span> Cumpleaños Hoy
+                        </p>
+                      </div>
+                      <div className="max-h-72 overflow-y-auto">
+                        {birthdayList.map((m) => (
+                          <button key={`bday-${m.id}`} onClick={() => handleBirthdayClick(m)} className="w-full px-4 py-2.5 border-b border-outline-variant/50 flex items-center gap-2 hover:bg-surface-container-high/50 transition-colors text-left cursor-pointer" type="button">
+                            <span className="material-symbols-outlined text-[18px] text-secondary">cake</span>
                             <div className="flex-1">
                               <p className="text-body-sm text-on-surface">{m.fullName}</p>
-                              <p className="text-[11px] text-on-surface-variant">
-                                {m.plan ?? 'Sin plan'} · {m.status === 'vencido' ? 'Vencido' : m.status === 'en_gracia' ? 'En Gracia' : 'Por vencer'}
-                              </p>
+                              <p className="text-[11px] text-on-surface-variant">¡Felicítalo por WhatsApp!</p>
                             </div>
-                            <span className="material-symbols-outlined text-on-surface-variant text-[16px]">chevron_right</span>
+                            <span className="material-symbols-outlined text-secondary text-[16px]">chat</span>
                           </button>
-                        );
-                      })
-                    )}
-                  </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
+
+                  {/* Sección Pagos/Vencimientos */}
+                  {attentionList.length > 0 && (
+                    <>
+                      <div className={`px-4 py-2.5 border-b border-outline-variant bg-surface-container-high ${birthdayList.length > 0 ? 'border-t' : ''}`}>
+                        <p className="font-label-sm text-label-sm text-on-surface uppercase tracking-wider">Requiere Atención</p>
+                      </div>
+                      <div className="max-h-72 overflow-y-auto">
+                        {attentionList.map((m) => {
+                          const isOverdue = m.status === 'vencido' || m.status === 'en_gracia';
+                          return (
+                            <button key={m.id} onClick={() => handleNotificationClick(m)} className="w-full px-4 py-2.5 border-b border-outline-variant/50 flex items-center gap-2 hover:bg-surface-container-high/50 transition-colors text-left cursor-pointer" type="button">
+                              <span className={`material-symbols-outlined text-[18px] ${isOverdue ? 'text-error' : 'text-tertiary'}`}>{isOverdue ? 'error' : 'warning'}</span>
+                              <div className="flex-1">
+                                <p className="text-body-sm text-on-surface">{m.fullName}</p>
+                                <p className="text-[11px] text-on-surface-variant">
+                                  {m.plan ?? 'Sin plan'} · {m.status === 'vencido' ? 'Vencido' : m.status === 'en_gracia' ? 'En Gracia' : 'Por vencer'}
+                                </p>
+                              </div>
+                              <span className="material-symbols-outlined text-on-surface-variant text-[16px]">chevron_right</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </>
+                  )}
+
+                  {/* Si no hay nada */}
+                  {attentionList.length === 0 && birthdayList.length === 0 && (
+                    <div className="px-4 py-6 text-center text-on-surface-variant text-body-sm">
+                      No hay alertas por ahora.
+                    </div>
+                  )}
+
                 </div>
               </>
             )}
