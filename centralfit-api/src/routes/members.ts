@@ -17,8 +17,8 @@ function getStatus(
   const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
   const graceCutoff = new Date(endDate.getTime() + graceDays * 24 * 60 * 60 * 1000);
 
-  if (now > graceCutoff) return 'vencido';        // superó los días de gracia: no puede pasar
-  if (now > endDate) return 'en_gracia';           // venció, pero todavía dentro de gracia: sí puede pasar
+  if (now > graceCutoff) return 'vencido';
+  if (now > endDate) return 'en_gracia';
   if (endDate <= sevenDaysFromNow) return 'por_vencer';
   return 'activo';
 }
@@ -46,8 +46,8 @@ router.get('/', async (req: AuthRequest, res) => {
       cedula: member.cedula,
       phone: member.phone,
       photoUrl: member.photoUrl,
-      initialWeight: member.initialWeight, // <--- AGREGAR
-      currentWeight: member.currentWeight, // <--- AGREGAR
+      initialWeight: member.initialWeight,
+      currentWeight: member.currentWeight,
       birthDate: member.birthDate,
       plan: latestSub?.plan.name ?? null,
       planId: latestSub?.planId ?? null,
@@ -69,69 +69,73 @@ router.post('/', async (req: AuthRequest, res) => {
     return res.status(400).json({ error: 'Nombre y cédula son requeridos' });
   }
 
-  let member;
   try {
-    member = await prisma.member.create({
-      data: { gymId: req.gymId, fullName, cedula, phone, photoUrl },
+    // NUEVO: Envolvemos TODO en una transacción. Si falla algo, se cancela todo.
+    const result = await prisma.$transaction(async (tx) => {
+      // 1. Crear miembro
+      const newMember = await tx.member.create({
+        data: { gymId: req.gymId, fullName, cedula, phone, photoUrl },
+      });
+
+      let subscription = null;
+      let transaction = null;
+
+      // 2. Si hay plan, crear suscripción y pago
+      if (planId) {
+        const plan = await tx.plan.findFirst({ where: { id: planId, gymId: req.gymId } });
+
+        if (plan) {
+          const start = startDate ? new Date(startDate) : new Date();
+          const end = new Date(start.getTime() + plan.durationDays * 24 * 60 * 60 * 1000);
+
+          let amountUsd: number | null = null;
+          let amountBs: number | null = null;
+          let exchangeRateUsed: number | null = null;
+
+          if (method) {
+            const settings = await tx.gymSettings.findUnique({ where: { gymId: req.gymId } });
+            const rateType = settings?.rateType ?? 'BCV';
+            // Nota: getCurrentRate usa la conexión global, lo cual es seguro aquí
+            const rate = await getCurrentRate();
+            const activeRate = rateType === 'Euro' && rate.eurToBs ? rate.eurToBs : rate.usdToBs;
+
+            const isBs = method !== 'Efectivo' && method !== 'Zelle' && method !== 'Binance';
+            const targetUsd = isBs ? (plan.priceUsdBs ? Number(plan.priceUsdBs) : Number(plan.priceUsd)) : Number(plan.priceUsd);
+
+            if (isBs) {
+              amountBs = targetUsd * activeRate;
+              exchangeRateUsed = activeRate;
+            } else {
+              amountUsd = targetUsd;
+            }
+          }
+
+          const sub = await tx.subscription.create({
+            data: { memberId: newMember.id, planId: plan.id, startDate: start, endDate: end },
+          });
+
+          if (method) {
+            transaction = await tx.transaction.create({
+              data: { subscriptionId: sub.id, amountUsd, amountBs, exchangeRateUsed, method, reference },
+            });
+          }
+
+          subscription = sub;
+        }
+      }
+
+      return { member: newMember, subscription, transaction };
     });
+
+    res.status(201).json(result);
+
   } catch (err: any) {
     if (err.code === 'P2002') {
       return res.status(409).json({ error: 'Ya existe un miembro con esta cédula en tu gimnasio.' });
     }
-    throw err;
+    console.error('Error al crear miembro:', err);
+    res.status(500).json({ error: 'Ocurrió un error interno al registrar el miembro.' });
   }
-
-  let subscription = null;
-  let transaction = null;
-
-  if (planId) {
-    const plan = await prisma.plan.findFirst({ where: { id: planId, gymId: req.gymId } });
-
-    if (plan) {
-      const start = startDate ? new Date(startDate) : new Date();
-      const end = new Date(start.getTime() + plan.durationDays * 24 * 60 * 60 * 1000);
-
-      let amountUsd: number | null = null;
-      let amountBs: number | null = null;
-      let exchangeRateUsed: number | null = null;
-
-      if (method) {
-        const settings = await prisma.gymSettings.findUnique({ where: { gymId: req.gymId } });
-        const rateType = settings?.rateType ?? 'BCV';
-        const rate = await getCurrentRate();
-        const activeRate = rateType === 'Euro' && rate.eurToBs ? rate.eurToBs : rate.usdToBs;
-
-        const isBs = method !== 'Efectivo' && method !== 'Zelle' && method !== 'Binance';
-        // Si es Bs, usamos priceUsdBs si existe, sino priceUsd
-        const targetUsd = isBs ? (plan.priceUsdBs ? Number(plan.priceUsdBs) : Number(plan.priceUsd)) : Number(plan.priceUsd);
-
-        if (isBs) {
-          amountBs = targetUsd * activeRate;
-          exchangeRateUsed = activeRate;
-        } else {
-          amountUsd = targetUsd;
-        }
-      }
-
-      const result = await prisma.$transaction(async (tx) => {
-        const sub = await tx.subscription.create({
-          data: { memberId: member.id, planId: plan.id, startDate: start, endDate: end },
-        });
-
-        const tr = method
-          ? await tx.transaction.create({
-              data: { subscriptionId: sub.id, amountUsd, amountBs, exchangeRateUsed, method, reference },
-            })
-          : null;
-
-        return { sub, tr };
-      });
-
-      subscription = result.sub;
-      transaction = result.tr;
-    }
-  }
-   res.status(201).json({ member, subscription, transaction });
 });
 
 // Buscar por cédula (para tu campo de búsqueda del front)
@@ -154,15 +158,14 @@ router.get('/search', async (req: AuthRequest, res) => {
     take: 10,
   });
 
-  // NUEVO: Mapeamos para devolver la info del plan y fechas, igual que en el GET /
   const result = members.map((member) => {
     const latestSub = member.subscriptions[0];
     return {
       id: member.id,
       fullName: member.fullName,
       cedula: member.cedula,
-      initialWeight: member.initialWeight, // <--- AGREGAR
-      currentWeight: member.currentWeight, // <--- AGREGAR
+      initialWeight: member.initialWeight,
+      currentWeight: member.currentWeight,
       birthDate: member.birthDate,
       plan: latestSub?.plan.name ?? null,
       planId: latestSub?.planId ?? null,
@@ -198,7 +201,6 @@ router.post('/:id/renew', async (req: AuthRequest, res) => {
   const plan = await prisma.plan.findFirst({ where: { id: planId, gymId: req.gymId } });
   if (!plan) return res.status(404).json({ error: 'Plan no encontrado' });
 
-  // Obtener configuración y tasa activa
   const settings = await prisma.gymSettings.findUnique({ where: { gymId: req.gymId } });
   const rateType = settings?.rateType ?? 'BCV';
   
@@ -210,10 +212,8 @@ router.post('/:id/renew', async (req: AuthRequest, res) => {
   }
   const activeRate = rateType === 'Euro' && rate.eurToBs ? rate.eurToBs : rate.usdToBs;
 
-  // NUEVO: Binance ahora se trata como USD (junto con Efectivo y Zelle)
   const isUsdMethod = (method: string) => method === 'Efectivo' || method === 'Zelle' || method === 'Binance';
 
-  // Determinar precio objetivo del plan
   const hasBs = payments.some(p => !isUsdMethod(p.method));
   const planPriceUsd = hasBs 
     ? (plan.priceUsdBs ? Number(plan.priceUsdBs) : Number(plan.priceUsd)) 
@@ -285,7 +285,7 @@ router.patch('/:id', async (req: AuthRequest, res) => {
   try {
     const member = await prisma.member.update({
       where: { id },
-      data: { fullName, cedula, phone, photoUrl, initialWeight, currentWeight, birthDate: birthDate ? new Date(birthDate) : null }, // <--- AGREGAR AQUÍ
+      data: { fullName, cedula, phone, photoUrl, initialWeight, currentWeight, birthDate: birthDate ? new Date(birthDate) : null },
     });
     res.json(member);
   } catch (err: any) {
@@ -294,7 +294,6 @@ router.patch('/:id', async (req: AuthRequest, res) => {
     }
     throw err;
   }
-
 });
 
 // Eliminar un miembro

@@ -41,7 +41,7 @@ app.use(cors({
   credentials: true
 }));
 
-app.use(express.json());
+app.use(express.json({ limit: '1mb' })); // Limitamos a 1MB para evitar ataques
 
 // 2. Limitador de intentos de Login/Registro (Seguridad: Anti-Fuerza Bruta)
 const authLimiter = rateLimit({
