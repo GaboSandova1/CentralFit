@@ -25,10 +25,32 @@ export async function requireAuth(req: AuthRequest, res: Response, next: NextFun
       return res.status(403).json({ error: 'Este gimnasio ha sido suspendido. Contacta a soporte.' });
     }
 
+    // MEJORA 8: Verificar que el usuario realmente exista y pertenezca al gimnasio
+    const user = await prisma.user.findFirst({
+      where: { id: payload.userId, gymId: payload.gymId }
+    });
+
+    if (!user) {
+      return res.status(401).json({ error: 'Usuario no válido o eliminado.' });
+    }
+
     req.userId = payload.userId;
     req.gymId = payload.gymId;
+    req.userRole = user.role; // MEJORA 9: Guardamos el rol para usarlo después
+    
     next();
   } catch {
     return res.status(401).json({ error: 'Token inválido o expirado' });
   }
+}
+
+// MEJORA 9: Middleware factory para validar roles
+export function requireRole(...roles: string[]) {
+  return (req: AuthRequest, res: Response, next: NextFunction) => {
+    const userRole = req.userRole;
+    if (!userRole || !roles.includes(userRole)) {
+      return res.status(403).json({ error: 'No tienes los permisos necesarios para realizar esta acción.' });
+    }
+    next();
+  };
 }

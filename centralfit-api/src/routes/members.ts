@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { prisma } from '../prisma';
-import { requireAuth, AuthRequest } from '../middleware/auth';
+import { requireAuth, AuthRequest, requireRole } from '../middleware/auth';
 import { getCurrentRate } from '../lib/exchangeRate';
 
 const router = Router();
@@ -60,7 +60,7 @@ router.get('/', async (req: AuthRequest, res) => {
   res.json(result);
 });
 
-// Crear un miembro (opcionalmente con su primera suscripción + pago)
+// Crear un miembro
 router.post('/', async (req: AuthRequest, res) => {
   if (!req.gymId) return res.status(401).json({ error: 'No autorizado' });
   const { fullName, cedula, phone, photoUrl, planId, startDate, method, reference } = req.body;
@@ -70,9 +70,7 @@ router.post('/', async (req: AuthRequest, res) => {
   }
 
   try {
-    // NUEVO: Envolvemos TODO en una transacción. Si falla algo, se cancela todo.
     const result = await prisma.$transaction(async (tx) => {
-      // 1. Crear miembro
       const newMember = await tx.member.create({
         data: { gymId: req.gymId, fullName, cedula, phone, photoUrl },
       });
@@ -80,7 +78,6 @@ router.post('/', async (req: AuthRequest, res) => {
       let subscription = null;
       let transaction = null;
 
-      // 2. Si hay plan, crear suscripción y pago
       if (planId) {
         const plan = await tx.plan.findFirst({ where: { id: planId, gymId: req.gymId } });
 
@@ -95,7 +92,6 @@ router.post('/', async (req: AuthRequest, res) => {
           if (method) {
             const settings = await tx.gymSettings.findUnique({ where: { gymId: req.gymId } });
             const rateType = settings?.rateType ?? 'BCV';
-            // Nota: getCurrentRate usa la conexión global, lo cual es seguro aquí
             const rate = await getCurrentRate();
             const activeRate = rateType === 'Euro' && rate.eurToBs ? rate.eurToBs : rate.usdToBs;
 
@@ -138,7 +134,7 @@ router.post('/', async (req: AuthRequest, res) => {
   }
 });
 
-// Buscar por cédula (para tu campo de búsqueda del front)
+// Buscar por cédula
 router.get('/search', async (req: AuthRequest, res) => {
   if (!req.gymId) return res.status(401).json({ error: 'No autorizado' });
 
@@ -177,7 +173,7 @@ router.get('/search', async (req: AuthRequest, res) => {
   res.json(result);
 });
 
-// Renovar/registrar el pago de un miembro (crea Subscription + Transaction juntos)
+// Renovar (Con MEJORA 5: Idempotencia)
 router.post('/:id/renew', async (req: AuthRequest, res) => {
   if (!req.gymId) return res.status(401).json({ error: 'No autorizado' });
 
@@ -200,6 +196,22 @@ router.post('/:id/renew', async (req: AuthRequest, res) => {
 
   const plan = await prisma.plan.findFirst({ where: { id: planId, gymId: req.gymId } });
   if (!plan) return res.status(404).json({ error: 'Plan no encontrado' });
+
+  const start = startDate ? new Date(startDate) : new Date();
+
+  // MEJORA 5: Verificar si ya existe una suscripción idéntica (mismo plan, misma fecha)
+  // para evitar dobles cobros si el recepcionista hace doble clic por accidente.
+  const existingSub = await prisma.subscription.findFirst({
+    where: {
+      memberId: member.id,
+      planId: plan.id,
+      startDate: start
+    }
+  });
+
+  if (existingSub) {
+    return res.status(409).json({ error: 'Ya se registró una renovación con este plan y fecha de inicio.' });
+  }
 
   const settings = await prisma.gymSettings.findUnique({ where: { gymId: req.gymId } });
   const rateType = settings?.rateType ?? 'BCV';
@@ -239,7 +251,6 @@ router.post('/:id/renew', async (req: AuthRequest, res) => {
     });
   }
 
-  const start = startDate ? new Date(startDate) : new Date();
   const end = new Date(start.getTime() + plan.durationDays * 24 * 60 * 60 * 1000);
 
   const result = await prisma.$transaction(async (tx) => {
@@ -296,8 +307,8 @@ router.patch('/:id', async (req: AuthRequest, res) => {
   }
 });
 
-// Eliminar un miembro
-router.delete('/:id', async (req: AuthRequest, res) => {
+// Eliminar un miembro (MEJORA 9: Solo el 'owner' puede borrar)
+router.delete('/:id', requireRole('owner'), async (req: AuthRequest, res) => {
   if (!req.gymId) return res.status(401).json({ error: 'No autorizado' });
 
   const id = req.params.id;

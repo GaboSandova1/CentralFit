@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import Login from './views/Login';
 import Register from './views/Register';
@@ -58,6 +58,16 @@ function getInitialRoute() {
 
 export default function App() {
   const [showSplash, setShowSplash] = useState(true);
+  const navigate = useNavigate();
+
+  // NUEVO: Escuchar el evento de expulsión
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      navigate('/login');
+    };
+    window.addEventListener('centralFitUnauthorized', handleUnauthorized);
+    return () => window.removeEventListener('centralFitUnauthorized', handleUnauthorized);
+  }, [navigate]);
 
   if (showSplash) {
     return <Splash onComplete={() => setShowSplash(false)} />;

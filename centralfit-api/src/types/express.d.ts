@@ -4,6 +4,7 @@ declare global {
       userId?: string;
       gymId?: string;
       adminId?: string;
+      userRole?: string;
     }
   }
 }

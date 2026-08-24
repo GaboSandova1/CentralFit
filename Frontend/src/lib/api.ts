@@ -27,10 +27,11 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
     localStorage.removeItem('token');
     sessionStorage.removeItem('token');
     localStorage.removeItem('adminToken');
-    window.location.reload();
+    // NUEVO: Disparamos un evento en lugar de recargar la página
+    window.dispatchEvent(new Event('centralFitUnauthorized'));
   }
 
-  // NUEVO: Si fue una petición de creación, edición o borrado exitosa, avisamos a la app
+  // Si fue una petición de creación, edición o borrado exitosa, avisamos a la app
   const method = (options.method || 'GET').toUpperCase();
   if (response.ok && ['POST', 'PATCH', 'PUT', 'DELETE'].includes(method)) {
     window.dispatchEvent(new Event('centralFitDataChanged'));
@@ -54,7 +55,6 @@ export async function uploadProfilePicture(file: File): Promise<string> {
     .from('profile-pictures')
     .getPublicUrl(filePath);
 
-  // NUEVO: Avisamos también que la foto subió
   window.dispatchEvent(new Event('centralFitDataChanged'));
 
   return data.publicUrl;
