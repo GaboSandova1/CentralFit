@@ -12,6 +12,9 @@ interface EditMemberModalProps {
     cedula: string;
     phone: string;
     photoUrl?: string | null;
+    initialWeight?: string | null;
+    currentWeight?: string | null;
+    birthDate?: string | null; // NUEVO
   };
 }
 
@@ -19,6 +22,9 @@ export default function EditMemberModal({ isOpen, onClose, onOpenDelete, onSaved
   const [fullName, setFullName] = useState('');
   const [cedula, setCedula] = useState('');
   const [phone, setPhone] = useState('');
+  const [initialWeight, setInitialWeight] = useState('');
+  const [currentWeight, setCurrentWeight] = useState('');
+  const [birthDate, setBirthDate] = useState(''); // NUEVO
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -29,6 +35,10 @@ export default function EditMemberModal({ isOpen, onClose, onOpenDelete, onSaved
       setFullName(member.fullName);
       setCedula(member.cedula);
       setPhone(member.phone);
+      setInitialWeight(member.initialWeight ?? '');
+      setCurrentWeight(member.currentWeight ?? '');
+      // Formatear la fecha para que el input type="date" la pueda leer (YYYY-MM-DD)
+      setBirthDate(member.birthDate ? new Date(member.birthDate).toISOString().slice(0, 10) : '');
       setPhotoUrl(member.photoUrl ?? null);
       setError(null);
     }
@@ -59,7 +69,15 @@ export default function EditMemberModal({ isOpen, onClose, onOpenDelete, onSaved
     try {
       const response = await apiFetch(`/members/${member.dbId}`, {
         method: 'PATCH',
-        body: JSON.stringify({ fullName, cedula, phone, photoUrl }),
+        body: JSON.stringify({ 
+          fullName, 
+          cedula, 
+          phone, 
+          photoUrl,
+          initialWeight: initialWeight || null,
+          currentWeight: currentWeight || null,
+          birthDate: birthDate || null // NUEVO
+        }),
       });
 
       if (!response.ok) {
@@ -96,7 +114,7 @@ export default function EditMemberModal({ isOpen, onClose, onOpenDelete, onSaved
             </div>
           )}
           <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
-            {/* Profile Photo Section - ACTUALIZADO */}
+            {/* Profile Photo Section */}
             <div className="flex items-center gap-4 pb-6 border-b border-outline-variant">
               <div className="relative group cursor-pointer w-20 h-20">
                 <div className="w-20 h-20 rounded-full border-2 border-outline-variant overflow-hidden bg-surface-container-high flex items-center justify-center relative">
@@ -131,6 +149,7 @@ export default function EditMemberModal({ isOpen, onClose, onOpenDelete, onSaved
                 </div>
               </div>
             </div>
+            
             {/* Personal Details Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Full Name */}
@@ -172,7 +191,53 @@ export default function EditMemberModal({ isOpen, onClose, onOpenDelete, onSaved
                   />
                 </div>
               </div>
+              {/* NUEVO: Fecha de Cumpleaños */}
+              <div className="space-y-2">
+                <label className="block font-label-sm text-label-sm text-on-surface-variant" htmlFor="birthDate">Fecha de Cumpleaños</label>
+                <input
+                  className="w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-2.5 text-on-surface focus:border-primary focus:ring-1 focus:ring-primary transition-colors outline-none font-body-md text-body-md placeholder-on-surface-variant [color-scheme:dark]"
+                  id="birthDate"
+                  type="date"
+                  value={birthDate}
+                  onChange={(e) => setBirthDate(e.target.value)}
+                />
+              </div>
             </div>
+
+            {/* Sección de Seguimiento Físico */}
+            <div className="pt-4 border-t border-outline-variant">
+              <h4 className="font-label-md text-label-md text-on-surface mb-3 flex items-center gap-2">
+                <span className="material-symbols-outlined text-primary text-[20px]">monitor_weight</span>
+                Seguimiento Físico (Opcional)
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="block font-label-sm text-label-sm text-on-surface-variant" htmlFor="initialWeight">Peso Inicial (kg)</label>
+                  <input
+                    className="w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-2.5 text-on-surface focus:border-primary focus:ring-1 focus:ring-primary transition-colors outline-none font-body-md text-body-md placeholder-on-surface-variant"
+                    id="initialWeight"
+                    type="number"
+                    step="0.1"
+                    placeholder="Ej: 75.5"
+                    value={initialWeight}
+                    onChange={(e) => setInitialWeight(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="block font-label-sm text-label-sm text-on-surface-variant" htmlFor="currentWeight">Peso Actual (kg)</label>
+                  <input
+                    className="w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-2.5 text-on-surface focus:border-primary focus:ring-1 focus:ring-primary transition-colors outline-none font-body-md text-body-md placeholder-on-surface-variant"
+                    id="currentWeight"
+                    type="number"
+                    step="0.1"
+                    placeholder="Ej: 72.0"
+                    value={currentWeight}
+                    onChange={(e) => setCurrentWeight(e.target.value)}
+                  />
+                </div>
+              </div>
+            </div>
+
           </form>
         </div>
         {/* Modal Footer (Actions) */}

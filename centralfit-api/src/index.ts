@@ -10,6 +10,7 @@ import reportsRoutes from './routes/reports';
 import adminRoutes from './routes/admin';
 import exchangeRateRoutes from './routes/exchangeRate';
 import settingsRoutes from './routes/settings';
+import attendanceRoutes from './routes/attendance';
 
 const app = express();
 
@@ -67,6 +68,7 @@ app.use('/reports', reportsRoutes);
 app.use('/admin', adminRoutes);
 app.use('/exchange-rate', exchangeRateRoutes);
 app.use('/settings', settingsRoutes);
+app.use('/attendance', attendanceRoutes);
 
 app.get('/', (_req, res) => {
   res.json({ status: 'CentralFit API funcionando 🏋️' });

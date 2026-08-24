@@ -14,6 +14,7 @@ export default function Sidebar({ isOpen, onClose, onOpenRenovation, onOpenSetti
   const navItems = [
     { name: 'dashboard', label: 'Panel', path: '/dashboard', icon: 'dashboard' },
     { name: 'members', label: 'Miembros', path: '/members', icon: 'group' },
+    { name: 'attendance', label: 'Asistencia', path: '/attendance', icon: 'fact_check' }, // NUEVO
     { name: 'plans', label: 'Planes', path: '/plans', icon: 'fitness_center' },
     { name: 'reports', label: 'Reportes', path: '/reports', icon: 'analytics' },
   ];
