@@ -204,7 +204,7 @@ export default function Topbar({ onMenuClick, onOpenProfile, refreshTrigger, onN
 
           <div className="h-8 w-px bg-outline-variant mx-2"></div>
           <button onClick={onOpenProfile} className="flex items-center gap-2 text-on-surface hover:text-primary transition-colors cursor-pointer" type="button">
-            <img alt="Manager Profile" className="w-8 h-8 rounded-full object-cover border border-outline-variant bg-surface-container-high" />
+            <img alt="Manager Profile" className="w-8 h-8 rounded-full object-cover border border-outline-variant bg-surface-container-high" src={profilePic || "https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsoutlined/person/default/24px.svg"} />
           </button>
         </div>
       </header>
