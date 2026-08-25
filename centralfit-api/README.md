@@ -212,4 +212,6 @@ El sistema cuenta con las siguientes entidades principales:
 - **CORS:** Configurado para permitir cualquier origen en desarrollo local, pero en producción (`NODE_ENV=production`) restringe estrictamente a `FRONTEND_URL` y localhost.
 - **Rate Limiting:** Las rutas `/auth/login`, `/auth/register` y `/admin/login` están limitadas a 10 peticiones por IP cada 15 minutos para prevenir ataques de fuerza bruta.
 - **Validación de Referencias:** El backend obliga a que todos los métodos de pago (excepto Efectivo) incluyan un número de referencia.
-
+- **Validación de Usuario (Auth):** El middleware `requireAuth` no solo valida la firma del JWT, sino que consulta la base de datos para verificar que el usuario siga existiendo y pertenezca al gimnasio antes de permitir cualquier operación.
+- **Autorización por Roles:** Se implementó un middleware `requireRole('owner')` para restringir acciones sensibles (como eliminar miembros) exclusivamente a los dueños del gimnasio.
+- **Idempotencia Básica:** El endpoint de renovación (`/members/:id/renew`) bloquea la creación de suscripciones duplicadas si un usuario hace doble clic por accidente con la misma fecha de inicio.

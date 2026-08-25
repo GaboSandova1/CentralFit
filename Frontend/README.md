@@ -13,6 +13,8 @@ Diseñada con un enfoque "Mobile First" y un sistema de temas oscuros inspirado 
 - **Exportación de Datos:** Generación y descarga de archivos CSV compatibles con Excel (separados por punto y coma y codificación UTF-8) para transacciones y listados de miembros.
 - **Automatización de WhatsApp:** Botones de recordatorio de pago y felicitación de cumpleaños que abren WhatsApp Web/App con mensajes pre-redactados dinámicamente.
 - **Control de Asistencia:** Vista dedicada con input simulando lector de huella/QR, registro instantáneo y tabla de asistentes del día con buscador y filtro por fecha.
+- **Validación de Subida de Imágenes:** Restricción en el frontend para aceptar solo archivos de imagen (MIME type) con un tamaño máximo de 5MB antes de enviarlos a Supabase.
+- **Rutas Protegidas Reales:** Implementación de un componente `ProtectedRoute` que redirige automáticamente a `/login` si no hay un token válido, evitando parpadeos de interfaces sin datos en sesiones expiradas.
 
 ## 🛠️ Stack Tecnológico
 
@@ -125,6 +127,6 @@ La aplicación utiliza `react-router-dom` para manejar la navegación. Las rutas
 
 ## 🔒 Manejo de Sesión
 
-- Al iniciar sesión, el JWT recibido del backend se guarda en `localStorage` para garantizar que la sesión persista entre pestañas y al cerrar el navegador.
+- Al iniciar sesión, si el usuario marca "Recordarme", el JWT se guarda en `localStorage` (persiste al cerrar el navegador). Si no se marca, se guarda en `sessionStorage` (se borra al cerrar la pestaña).
 - El helper `apiFetch` (en `src/lib/api.ts`) se encarga de adjuntar automáticamente el token en los headers (`Authorization: Bearer <token>`) a todas las peticiones.
-- Si la API responde con un código `401` (No autorizado) o `403` (Suspendido), el frontend limpia el token y redirige al usuario al Login automáticamente.
+- Si la API responde con un código `401` (No autorizado) o `403` (Suspendido), el frontend dispara un evento global que limpia la sesión y redirige al usuario al Login limpiamente, sin recargar la página bruscamente.
