@@ -12,8 +12,8 @@ import SuperAdminLogin from './views/SuperAdminLogin';
 import Splash from './views/Splash';
 import NotFound from './views/NotFound';
 import Attendance from './views/Attendance';
+import ProtectedRoute from './components/ProtectedRoute'; // NUEVO
 
-// Wrappers para adaptar las props a useNavigate
 const LoginWrapper = () => {
   const navigate = useNavigate();
   return (
@@ -59,11 +59,8 @@ function getInitialRoute() {
 export default function App() {
   const [showSplash, setShowSplash] = useState(true);
 
-  // NUEVO: Escuchar el evento de expulsión
   useEffect(() => {
     const handleUnauthorized = () => {
-      // Usamos window.location.href para forzar la redirección sin usar useNavigate()
-      // ya que este componente está por FUERA del BrowserRouter.
       localStorage.removeItem('token');
       localStorage.removeItem('adminToken');
       window.location.href = '/login';
@@ -85,16 +82,17 @@ export default function App() {
         <Route path="/superadminlogin" element={<SuperAdminLoginWrapper />} />
         <Route path="/superadmin" element={<SuperAdminWrapper />} />
         
-        {/* Rutas protegidas que usan el Layout */}
-        <Route element={<Layout />}>
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/members" element={<Members />} />
-          <Route path="/plans" element={<Plans />} />
-          <Route path="/reports" element={<Reports />} />
-          <Route path="/attendance" element={<Attendance />} />
+        {/* NUEVO: Rutas protegidas que usan el Layout */}
+        <Route element={<ProtectedRoute />}>
+          <Route element={<Layout />}>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/members" element={<Members />} />
+            <Route path="/plans" element={<Plans />} />
+            <Route path="/reports" element={<Reports />} />
+            <Route path="/attendance" element={<Attendance />} />
+          </Route>
         </Route>
 
-        {/* Si la URL no existe, mostramos el 404 */}
         <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>

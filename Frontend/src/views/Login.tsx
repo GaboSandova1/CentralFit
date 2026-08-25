@@ -16,7 +16,7 @@ export default function Login({ onLogin, onNavigateToRegister, onLoginSuperAdmin
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setIsSubmitting(true);
@@ -28,18 +28,22 @@ export default function Login({ onLogin, onNavigateToRegister, onLoginSuperAdmin
         body: JSON.stringify({ email, password }),
       });
 
-      // 1. Revisamos el status HTTP primero
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         setError(errorData.error || 'Credenciales inválidas');
-        return; // Cortamos acá, no intentamos leer el token
+        return;
       }
 
-      // 2. Si llegó aquí, es un 200 OK, entonces leemos el token
       const data = await response.json();
 
-      // Guardamos siempre en localStorage para que la sesión persista entre pestañas
-      localStorage.setItem('token', data.token);
+      // NUEVO: Respetar el checkbox de Recordarme
+      if (rememberMe) {
+        localStorage.setItem('token', data.token);
+        sessionStorage.removeItem('token'); // Limpiar por si acaso
+      } else {
+        sessionStorage.setItem('token', data.token);
+        localStorage.removeItem('token'); // Limpiar por si acaso
+      }
 
       onLogin();
     } catch {
