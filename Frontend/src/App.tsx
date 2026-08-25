@@ -58,16 +58,19 @@ function getInitialRoute() {
 
 export default function App() {
   const [showSplash, setShowSplash] = useState(true);
-  const navigate = useNavigate();
 
   // NUEVO: Escuchar el evento de expulsión
   useEffect(() => {
     const handleUnauthorized = () => {
-      navigate('/login');
+      // Usamos window.location.href para forzar la redirección sin usar useNavigate()
+      // ya que este componente está por FUERA del BrowserRouter.
+      localStorage.removeItem('token');
+      localStorage.removeItem('adminToken');
+      window.location.href = '/login';
     };
     window.addEventListener('centralFitUnauthorized', handleUnauthorized);
     return () => window.removeEventListener('centralFitUnauthorized', handleUnauthorized);
-  }, [navigate]);
+  }, []);
 
   if (showSplash) {
     return <Splash onComplete={() => setShowSplash(false)} />;
@@ -88,7 +91,7 @@ export default function App() {
           <Route path="/members" element={<Members />} />
           <Route path="/plans" element={<Plans />} />
           <Route path="/reports" element={<Reports />} />
-          <Route path="/attendance" element={<Attendance />} /> {/* NUEVO */}
+          <Route path="/attendance" element={<Attendance />} />
         </Route>
 
         {/* Si la URL no existe, mostramos el 404 */}
