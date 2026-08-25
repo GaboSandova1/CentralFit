@@ -52,7 +52,8 @@ const SuperAdminWrapper = () => {
 
 function getInitialRoute() {
   if (localStorage.getItem('adminToken')) return '/superadmin';
-  if (localStorage.getItem('token')) return '/dashboard';
+  // NUEVO: Revisar localStorage Y sessionStorage
+  if (localStorage.getItem('token') || sessionStorage.getItem('token')) return '/dashboard';
   return '/login';
 }
 
