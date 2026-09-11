@@ -281,6 +281,21 @@ export default function Members() {
                         >
                           <span className="material-symbols-outlined text-[20px]">delete</span>
                         </button>
+                        <button
+                          onClick={() => {
+                            if (!member.phone) return;
+                            const formattedPhone = member.phone.startsWith('0') ? `58${member.phone.substring(1)}` : `58${member.phone}`;
+                            // Usamos window.location.origin para obtener la URL de la app (ej. https://centralfit.netlify.app)
+                            const cardUrl = `${window.location.origin}/access-card/${member.id}`;
+                            const text = `Hola ${member.fullName}, aquí tienes tu carnet digital de acceso al gimnasio. Guárdalo en tu teléfono para usarlo en la entrada: ${cardUrl}`;
+                            window.open(`https://wa.me/${formattedPhone}?text=${encodeURIComponent(text)}`, '_blank');
+                          }}
+                          className="w-8 h-8 rounded-lg hover:bg-secondary/20 hover:text-secondary flex items-center justify-center text-on-surface-variant transition-colors cursor-pointer" 
+                          title="Enviar Carnet Digital"
+                          type="button"
+                        >
+                          <span className="material-symbols-outlined text-[20px]">qr_code_2</span>
+                        </button>
                       </div>
                     </td>
                   </tr>

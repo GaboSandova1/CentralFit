@@ -13,6 +13,7 @@ import Splash from './views/Splash';
 import NotFound from './views/NotFound';
 import Attendance from './views/Attendance';
 import ProtectedRoute from './components/ProtectedRoute'; // NUEVO
+import AccessCard from './views/AccessCard';
 
 const LoginWrapper = () => {
   const navigate = useNavigate();
@@ -79,6 +80,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Navigate to={getInitialRoute()} replace />} />
         <Route path="/login" element={<LoginWrapper />} />
+        <Route path="/access-card/:memberId" element={<AccessCard />} />
         <Route path="/register" element={<RegisterWrapper />} />
         <Route path="/superadminlogin" element={<SuperAdminLoginWrapper />} />
         <Route path="/superadmin" element={<SuperAdminWrapper />} />

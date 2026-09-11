@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { generateInvoicePDF } from '../lib/invoice';
 import { apiFetch } from '../lib/api';
 
 interface TransactionHistoryModalProps {
@@ -253,6 +254,8 @@ export default function TransactionHistoryModal({ isOpen, onClose, initialRange,
                   <th className="p-3 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Referencia</th>
                   <th className="p-3 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-right">Monto (USD)</th>
                   <th className="p-3 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-right">Monto (Bs)</th>
+                  {/* NUEVO: Título de Factura en el encabezado */}
+                  <th className="p-3 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider text-right">Factura</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-outline-variant/50">
@@ -275,6 +278,37 @@ export default function TransactionHistoryModal({ isOpen, onClose, initialRange,
                     <td className="p-3 font-body-sm text-on-surface-variant">{tx.reference ?? '—'}</td>
                     <td className="p-3 font-body-sm text-on-surface font-medium text-right">{tx.amountUsd !== null ? `$${Number(tx.amountUsd).toFixed(2)}` : '—'}</td>
                     <td className="p-3 font-body-sm text-on-surface-variant text-right">{tx.amountBs !== null ? `Bs ${Number(tx.amountBs).toLocaleString('es-VE')}` : '—'}</td>
+                    {/* NUEVO: Botón de Descargar PDF */}
+                    <td className="p-3 text-right">
+                      <button 
+                        onClick={async () => {
+                          const meRes = await apiFetch('/auth/me');
+                          const meData = meRes.ok ? await meRes.json() : null;
+
+                          generateInvoicePDF({
+                            invoiceNumber: `CF-${tx.id.substring(0, 8).toUpperCase()}`,
+                            date: new Date(tx.createdAt).toLocaleString('es-VE'),
+                            gymName: meData?.gym?.name || 'CentralFit Gym',
+                            gymAddress: meData?.gym?.address || 'Dirección no registrada',
+                            gymPhone: meData?.gym?.phone || 'Sin teléfono',
+                            memberName: tx.memberName,
+                            memberCedula: tx.memberCedula,
+                            planName: tx.plan,
+                            startDate: new Date(tx.createdAt).toLocaleDateString('es-VE'),
+                            endDate: 'N/A',
+                            method: tx.method,
+                            reference: tx.reference || 'N/A',
+                            amountUsd: tx.amountUsd ? Number(tx.amountUsd) : null,
+                            amountBs: tx.amountBs ? Number(tx.amountBs) : null,
+                            exchangeRate: null
+                          });
+                        }} 
+                        className="text-primary hover:text-primary-fixed transition-colors cursor-pointer inline-flex items-center gap-1"
+                        type="button"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">picture_as_pdf</span>
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>

@@ -5,6 +5,27 @@ import { getCurrentRate } from '../lib/exchangeRate';
 
 const router = Router();
 
+// Ruta pública para el carnet digital del cliente
+router.get('/public/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const member = await prisma.member.findUnique({
+      where: { id },
+      include: { gym: { select: { name: true } } }
+    });
+
+    if (!member) return res.status(404).json({ error: 'Miembro no encontrado' });
+
+    res.json({
+      fullName: member.fullName,
+      cedula: member.cedula,
+      gymName: member.gym.name
+    });
+  } catch {
+    res.status(500).json({ error: 'Error del servidor' });
+  }
+});
+
 router.use(requireAuth);
 
 function getStatus(
